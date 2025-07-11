@@ -28,9 +28,11 @@ export default async function RootLayout({
 
     return (
         <html lang="es">
-            <SidebarProvider defaultOpen={defaultOpen}>
-                <body className={`${font.className} antialiased`}>{children}</body>
-            </SidebarProvider>
+            <body className={`${font.className} antialiased`}>
+                <SidebarProvider defaultOpen={defaultOpen}>
+                    <main>{children}</main>
+                </SidebarProvider>
+            </body>
         </html>
     );
 }
