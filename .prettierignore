@@ -1,0 +1,15 @@
+# npm
+node_modules
+*.log
+*.gz
+
+# next
+.next
+
+# Coveralls
+coverage
+
+# Build
+dist
+
+pnpm-lock.yaml
