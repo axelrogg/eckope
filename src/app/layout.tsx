@@ -1,32 +1,36 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { cookies } from "next/headers";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
-const geistSans = Geist({
-    variable: "--font-geist-sans",
-    subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-    variable: "--font-geist-mono",
+const font = Space_Grotesk({
     subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-    title: "",
+    title: "Éckope",
     description: "",
 };
 
-export default function RootLayout({
+export const viewport: Viewport = {
+    width: "device-width",
+    initialScale: 1,
+};
+
+export default async function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const cookieStore = await cookies();
+    const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+
     return (
-        <html lang="en">
-            <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-                {children}
-            </body>
+        <html lang="es">
+            <SidebarProvider defaultOpen={defaultOpen}>
+                <body className={`${font.className} antialiased`}>{children}</body>
+            </SidebarProvider>
         </html>
     );
 }
