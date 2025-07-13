@@ -3,6 +3,11 @@
 import { useEffect } from "react";
 
 function matchHotkey(hotkey: string[], event: KeyboardEvent): boolean {
+    if (typeof event.key !== "string") {
+        // this usually triggers when pressing `Enter` when searching for an
+        // address on `MapSearchBar`.
+        return false;
+    }
     const key = event.key.toLowerCase();
 
     return (
