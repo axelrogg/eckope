@@ -23,6 +23,13 @@ export const MapSearchBar = () => {
     const queryFormFieldRef = useRef<HTMLInputElement | null>(null);
     const [isFocused, setIsFocused] = useState(false);
 
+    const form = useForm<z.infer<typeof formSchema>>({
+        resolver: zodResolver(formSchema),
+        defaultValues: {
+            query: "",
+        },
+    });
+
     useHotkeys({
         "Ctrl+K": () => {
             form.setFocus("query");
@@ -34,20 +41,21 @@ export const MapSearchBar = () => {
         },
     });
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            query: "",
-        },
-    });
-
     useEffect(() => form.setFocus("query"), [form]);
+
+    function handleSearchIconClick() {
+        if (form.getValues("query") === "") {
+            form.setFocus("query");
+            return;
+        }
+        onSubmit({ query: form.getValues("query") });
+    }
 
     async function onSubmit({ query }: z.infer<typeof formSchema>) {
         setSearchQuery(query);
         try {
             const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`
+                `https://nominatim.openstreetmap.org/search?street=${encodeURIComponent(query)}&country=Peru&city=Lima&format=json&limit=1`
             );
             if (!response.ok) {
                 console.error(response);
@@ -72,14 +80,6 @@ export const MapSearchBar = () => {
         } catch (error) {
             console.error(error);
         }
-    }
-
-    function handleSearchIconClick() {
-        if (form.getValues("query") === "") {
-            form.setFocus("query");
-            return;
-        }
-        onSubmit({ query: form.getValues("query") });
     }
 
     return (
