@@ -10,7 +10,8 @@
         "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
         "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
         "cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts",
-        "prepare": "husky"
+        "prepare": "husky",
+        "pretty": "prettier . --write"
     },
     "dependencies": {
         "@hookform/resolvers": "^5.1.1",
@@ -22,6 +23,7 @@
         "@radix-ui/react-dialog": "^1.1.14",
         "@radix-ui/react-dropdown-menu": "^2.1.15",
         "@radix-ui/react-label": "^2.1.7",
+        "@radix-ui/react-scroll-area": "^1.2.9",
         "@radix-ui/react-separator": "^1.1.7",
         "@radix-ui/react-slot": "^1.2.3",
         "@radix-ui/react-tooltip": "^1.2.7",
@@ -30,6 +32,7 @@
         "clsx": "^2.1.1",
         "leaflet": "^1.9.4",
         "lucide-react": "^0.525.0",
+        "motion": "^12.23.3",
         "next": "15.3.5",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
