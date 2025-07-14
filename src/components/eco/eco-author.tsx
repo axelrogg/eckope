@@ -1,6 +1,6 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { dateUtils } from "@/lib/utils/date";
 import { EcoAuthor as EcoAuthorType } from "@/types/eco";
+import { dateUtils } from "@/lib/utils/date";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 function getInitials(name?: string): string {
     if (!name) return "AN";
