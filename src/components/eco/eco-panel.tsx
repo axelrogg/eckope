@@ -68,7 +68,7 @@ export const EcoPinPanel = ({ ecoPin, open, setOpen }: EcoPanelProps) => {
                             </CardHeader>
                             <CardContent className="space-y-7 text-sm">
                                 <div className="space-y-3">
-                                    <EcoContent content={ecoPin.content} />
+                                    <EcoContent content={ecoPin.content} maxLines={15} />
                                     <EcoControls
                                         upvotes={20}
                                         downvotes={20}
