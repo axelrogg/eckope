@@ -1,10 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-interface EcoAuthorProps {
-    username?: string;
-    fullName?: string;
-    avatarUrl?: string;
-}
+import { dateUtils } from "@/lib/utils/date";
+import { EcoAuthor as EcoAuthorType } from "@/types/eco";
 
 function getInitials(name?: string): string {
     if (!name) return "AN";
@@ -22,11 +18,14 @@ function getInitials(name?: string): string {
     return (word[0] + "N").toUpperCase();
 }
 
-export const EcoAuthor = ({
-    username = "",
-    fullName = "",
-    avatarUrl = "",
-}: EcoAuthorProps) => {
+interface EcoAuthorProps {
+    author: EcoAuthorType;
+    createdAt: Date;
+}
+
+export const EcoAuthor = ({ author, createdAt }: EcoAuthorProps) => {
+    const { username, fullName, avatarUrl } = author;
+
     return (
         <div className="flex flex-row items-center space-x-2">
             <Avatar>
@@ -39,7 +38,11 @@ export const EcoAuthor = ({
             </Avatar>
             <div className="flex flex-col">
                 <span>{username ? `@${username}` : "[eliminado]"}</span>
-                {fullName && <span className="text-muted">{fullName}</span>}
+                <div className="space-x-3">
+                    {fullName && <span className="text-muted">{fullName}</span>}
+                    {fullName && <span className="text-muted">•</span>}
+                    <span className="text-muted">{dateUtils.timeSince(createdAt)}</span>
+                </div>
             </div>
         </div>
     );
