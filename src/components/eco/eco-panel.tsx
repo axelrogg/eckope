@@ -5,7 +5,6 @@ import * as React from "react";
 import { X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 
-import { EcoPin } from "@/types/eco";
 import {
     Card,
     CardAction,
@@ -24,29 +23,26 @@ import { EcoPanelReplyForm } from "./eco-panel-form";
 import { Eco } from "./eco";
 import { EcoAuthor } from "./eco-author";
 import { EcoContent } from "./eco-content";
+import { useMap } from "@/hooks";
 
-interface EcoPanelProps {
-    ecoPin: EcoPin;
-    open: boolean;
-    setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-}
+export const EcoPinPanel = () => {
+    const { ecoPin, showEcoPinCard, setShowEcoPinCard } = useMap();
 
-export const EcoPinPanel = ({ ecoPin, open, setOpen }: EcoPanelProps) => {
     React.useEffect(() => {
-        if (open) {
+        if (showEcoPinCard) {
             document.body.style.overflow = "hidden";
         }
-    }, [open]);
+    }, [showEcoPinCard]);
 
     const handleAnimationComplete = () => {
-        if (!open) {
+        if (!showEcoPinCard) {
             document.body.style.overflow = "";
         }
     };
 
     return (
         <AnimatePresence>
-            {open && (
+            {ecoPin && showEcoPinCard && (
                 <motion.div
                     className="absolute top-0 right-0 z-50 h-svh bg-transparent p-2 lg:w-120"
                     role="dialog"
@@ -73,7 +69,7 @@ export const EcoPinPanel = ({ ecoPin, open, setOpen }: EcoPanelProps) => {
                                         aria-label="Cerrar el panel de eco"
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => setOpen(false)}
+                                        onClick={() => setShowEcoPinCard(false)}
                                     >
                                         <X />
                                     </Button>
@@ -90,22 +86,21 @@ export const EcoPinPanel = ({ ecoPin, open, setOpen }: EcoPanelProps) => {
                                     <EcoPanelReplyForm />
                                 </div>
                                 <React.Fragment>
-                                    {ecoPin.ecos.length > 0 &&
-                                        ecoPin.ecos.map((eco, i) => (
-                                            <React.Fragment key={i}>
-                                                <Eco
-                                                    replies={eco.replies}
-                                                    upvotes={eco.upvotes}
-                                                    downvotes={eco.downvotes}
-                                                    content={eco.content}
-                                                    author={eco.author}
-                                                    createdAt={eco.createdAt}
-                                                />
-                                                {i < ecoPin.ecos.length - 1 && (
-                                                    <Separator className="my-2" />
-                                                )}
-                                            </React.Fragment>
-                                        ))}
+                                    {ecoPin.ecos.map((eco, i) => (
+                                        <React.Fragment key={i}>
+                                            <Eco
+                                                replies={eco.replies}
+                                                upvotes={eco.upvotes}
+                                                downvotes={eco.downvotes}
+                                                content={eco.content}
+                                                author={eco.author}
+                                                createdAt={eco.createdAt}
+                                            />
+                                            {i < ecoPin.ecos.length - 1 && (
+                                                <Separator className="my-2" />
+                                            )}
+                                        </React.Fragment>
+                                    ))}
                                 </React.Fragment>
                             </CardContent>
                         </Card>

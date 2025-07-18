@@ -1,16 +1,22 @@
-type MapLocation = {
+import { EcoPin } from "./eco";
+
+export type MapLocation = {
     lat: number;
     lng: number;
 };
 
-type MapContextType = {
+export type MapContextType = {
     location: MapLocation | null;
     setLocation: (location: MapLocation | null) => void;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
+    ecoPin: EcoPin | null;
+    setEcoPin: (ecoPin: EcoPin | null) => void;
+    showEcoPinCard: boolean;
+    setShowEcoPinCard: (value: boolean) => void;
 };
 
-type MapLocationSearchResponseAddress = {
+export type MapLocationSearchResponseAddress = {
     city?: string;
     state_district?: string;
     state?: string;
@@ -21,7 +27,7 @@ type MapLocationSearchResponseAddress = {
     // Add other possible address fields as needed
 };
 
-type MapLocationSearchResponseExtratags = {
+export type MapLocationSearchResponseExtratags = {
     capital?: string;
     website?: string;
     wikidata?: string;
@@ -30,7 +36,7 @@ type MapLocationSearchResponseExtratags = {
     // Add other possible extratags as needed
 };
 
-type MapLocationSearchResponse = {
+export type MapLocationSearchResponse = {
     place_id: number;
     licence: string;
     osm_type: string;

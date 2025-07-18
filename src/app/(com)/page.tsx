@@ -1,10 +1,15 @@
-import { MapClient, MapProvider, MapSearchBar } from "@/components/map";
+import { MapClient, MapProvider } from "@/components/map";
+import { MapToolBar } from "@/components/map/map-tool-bar";
+import { EcoPinPanel } from "@/components/eco/eco-panel";
+import { MapNote } from "./map-note";
 
 export default function Home() {
     return (
         <MapProvider>
-            <MapSearchBar />
+            <MapNote />
+            <MapToolBar />
             <MapClient />
+            <EcoPinPanel />
         </MapProvider>
     );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 import { Search } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -10,8 +10,7 @@ import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { KeyboardKey } from "@/components/keyboard/keyboard-key";
-import { useHotkeys, useMap, useUserPlatform } from "@/hooks";
+import { useMap } from "@/hooks";
 
 const formSchema = z.object({
     query: z.string().min(1).max(255),
@@ -19,25 +18,12 @@ const formSchema = z.object({
 
 export const MapSearchBar = () => {
     const { setSearchQuery, setLocation } = useMap();
-    const userPlatform = useUserPlatform();
     const queryFormFieldRef = useRef<HTMLInputElement | null>(null);
-    const [isFocused, setIsFocused] = useState(false);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             query: "",
-        },
-    });
-
-    useHotkeys({
-        "Ctrl+K": () => {
-            form.setFocus("query");
-            setIsFocused(true);
-        },
-        Escape: () => {
-            queryFormFieldRef.current?.blur();
-            setIsFocused(false);
         },
     });
 
@@ -83,18 +69,12 @@ export const MapSearchBar = () => {
     }
 
     return (
-        <div
-            className={`bg-foreground absolute z-40 flex w-1/3 flex-row items-center rounded-lg px-3 py-2 shadow-lg transition-all duration-500 ${
-                isFocused
-                    ? "bottom-1/2 left-1/4 translate-y-1/2 sm:left-1/3"
-                    : "bottom-[12.5%] left-1/4 sm:left-1/3"
-            }`}
-        >
-            <Form {...form}>
+        <Form {...form}>
+            <div className="bg-foreground flex w-full flex-row items-center rounded-lg">
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Search
-                            className="text-primary-foreground cursor-pointer"
+                            className="text-background cursor-pointer"
                             size={20}
                             onClick={handleSearchIconClick}
                         />
@@ -123,11 +103,7 @@ export const MapSearchBar = () => {
                         )}
                     />
                 </form>
-            </Form>
-            <div className="flex flex-row space-x-2">
-                <KeyboardKey>{userPlatform === "macos" ? "Cmd" : "Ctrl"}</KeyboardKey>
-                <KeyboardKey>K</KeyboardKey>
             </div>
-        </div>
+        </Form>
     );
 };
