@@ -32,7 +32,7 @@ export default async function RootLayout({
             <body className={`${font.className} antialiased`}>
                 <SidebarProvider defaultOpen={defaultOpen}>
                     <main>
-                        <SidebarTrigger className="absolute top-2 left-2 sm:hidden" />
+                        <SidebarTrigger className="absolute top-2 left-2 md:hidden" />
                         {children}
                     </main>
                 </SidebarProvider>
