@@ -32,17 +32,30 @@ interface EcoPanelProps {
 }
 
 export const EcoPinPanel = ({ ecoPin, open, setOpen }: EcoPanelProps) => {
+    React.useEffect(() => {
+        if (open) {
+            document.body.style.overflow = "hidden";
+        }
+    }, [open]);
+
+    const handleAnimationComplete = () => {
+        if (!open) {
+            document.body.style.overflow = "";
+        }
+    };
+
     return (
         <AnimatePresence>
             {open && (
                 <motion.div
-                    className="absolute top-0 right-0 z-50 h-svh w-120 bg-transparent p-2"
+                    className="absolute top-0 right-0 z-50 h-svh bg-transparent p-2 lg:w-120"
                     role="dialog"
                     aria-modal="true"
                     initial={{ x: "100%", opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     exit={{ x: "100%", opacity: 0 }}
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    onAnimationComplete={handleAnimationComplete}
                 >
                     <ScrollArea className="h-full rounded-xl">
                         <Card className="h-full">
