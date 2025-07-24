@@ -55,7 +55,7 @@ export const MapNote = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.3 }}
-                    className="absolute top-2 left-1/4 z-40"
+                    className="absolute top-2 left-1/4 z-[99]"
                 >
                     <Card className="bg-background">
                         <CardHeader>
