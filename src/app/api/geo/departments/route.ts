@@ -35,24 +35,25 @@ export async function GET(req: NextRequest) {
     });
 
     if (!queryParseResult.success) {
-        return NextResponse.json(
-            httpErrorResponse({
-                type: "about:blank",
-                title: "Invalid query parameters",
-                status: 400,
-                detail: "One or more parameters are invalid.",
-                errors: {
-                    code: 123,
-                    ...z.treeifyError(queryParseResult.error),
-                },
-                instance: req.nextUrl.pathname,
-            })
-        );
+        return httpErrorResponse({
+            type: "about:blank",
+            title: "Invalid query parameters",
+            status: 400,
+            detail: "One or more parameters are invalid.",
+            errors: {
+                code: 123, // TODO: Implement API error codes
+                ...z.treeifyError(queryParseResult.error),
+            },
+            instance: req.nextUrl.pathname,
+        });
     }
 
     const { code, name, format } = queryParseResult.data;
 
-    const departmentsFound = await geoQueries.departments.find({ code, name });
+    const departmentsFound = await geoQueries
+        .departments()
+        .where({ params: { code, name } })
+        .findMany();
 
     if (!departmentsFound) {
         return NextResponse.json([], { status: 200 });
@@ -79,8 +80,13 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(
         departmentsFound.map((dep) => ({
+            id: dep.id,
             code: dep.code,
             name: dep.name,
+            length_deg: dep.lengthDeg,
+            area_deg2: dep.areaDeg2,
+            length_km: dep.lengthKm,
+            area_km2: dep.areaKm2,
         }))
     );
 }

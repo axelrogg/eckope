@@ -44,23 +44,34 @@ const querySchema = z.object({
 export async function GET(req: NextRequest) {
     const { searchParams } = req.nextUrl;
 
-    const parseResult = querySchema.safeParse({
+    const rawQuery = {
         ubigeo: searchParams.get("ubigeo") || undefined,
         name: searchParams.get("name") || undefined,
-        departmentCode: searchParams.get("department_id") || undefined,
+        departmentCode: searchParams.get("department_code") || undefined,
         departmentName: searchParams.get("department_name") || undefined,
-        provinceCode: searchParams.get("province_id") || undefined,
+        provinceCode: searchParams.get("province_code") || undefined,
         provinceName: searchParams.get("province_name") || undefined,
         format: searchParams.get("format") || undefined,
-    });
+    };
+
+    console.log("[GeoAPI_Districts_GET] Incoming request with query:", rawQuery);
+
+    const parseResult = querySchema.safeParse(rawQuery);
 
     if (!parseResult.success) {
+        console.error(
+            "[GeoAPI_Districts_GET] Query validation failed:",
+            z.treeifyError(parseResult.error)
+        );
         return httpErrorResponse({
             type: "about:blank",
             title: "Invalid query parameters",
             status: 400,
             detail: "One or more query parameters are invalid.",
-            errors: z.treeifyError(parseResult.error),
+            errors: {
+                code: 123, // TODO: Implement API error codes
+                ...z.treeifyError(parseResult.error),
+            },
             instance: req.nextUrl.pathname,
         });
     }
@@ -75,7 +86,7 @@ export async function GET(req: NextRequest) {
         format,
     } = parseResult.data;
 
-    const districtsFound = await geoQueries.districts.find({
+    console.log("[GeoAPI_Districts_GET] Fetching districts with filters:", {
         ubigeo,
         name,
         departmentCode,
@@ -84,11 +95,29 @@ export async function GET(req: NextRequest) {
         provinceName,
     });
 
-    if (!districtsFound) {
+    const districtsFound = await geoQueries
+        .districts()
+        .where({
+            params: {
+                ubigeo,
+                name,
+                departmentCode,
+                departmentName,
+                provinceCode,
+                provinceName,
+            },
+        })
+        .findMany();
+
+    console.log(`[GeoAPI_Districts_GET] ${districtsFound.length} districts found`);
+
+    if (!districtsFound || districtsFound.length === 0) {
+        console.log("[GeoAPI_Districts_GET] No matching districts found.");
         return NextResponse.json([], { status: 200 });
     }
 
     if (format === "geojson") {
+        console.log("[GeoAPI_Districts_GET] Returning response in GeoJSON format");
         return NextResponse.json(
             toGeoJSON(
                 districtsFound.map((dist) => ({
@@ -112,6 +141,8 @@ export async function GET(req: NextRequest) {
             )
         );
     }
+
+    console.log("[GeoAPI_Districts_GET] Returning response in JSON format");
 
     return NextResponse.json(
         districtsFound.map((dist) => ({

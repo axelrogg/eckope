@@ -22,20 +22,28 @@ const pointInDistrictQuerySchema = z.object({
 export async function GET(req: NextRequest) {
     const { searchParams } = req.nextUrl;
 
-    const parseResult = pointInDistrictQuerySchema.safeParse({
+    const rawQuery = {
         latitude: searchParams.get("latitude"),
         longitude: searchParams.get("longitude"),
         format: searchParams.get("format") || undefined,
-    });
+    };
+
+    console.log("[GeoAPI_Districts_Contains_GET] Incoming request with query:", rawQuery);
+
+    const parseResult = pointInDistrictQuerySchema.safeParse(rawQuery);
 
     if (!parseResult.success) {
+        console.error(
+            "[GeoAPI_Districts_Contains_GET] Query validation failed:",
+            z.treeifyError(parseResult.error)
+        );
         return httpErrorResponse({
             type: "about:blank",
             title: "Invalid query parameters",
             status: 400,
             detail: "One or more parameters are invalid.",
             errors: {
-                code: 123,
+                code: 123, // TODO: Implement API error codes
                 ...z.treeifyError(parseResult.error),
             },
             instance: req.nextUrl.pathname,
@@ -44,16 +52,36 @@ export async function GET(req: NextRequest) {
 
     const { latitude, longitude, format } = parseResult.data;
 
-    const district = await geoQueries.districts.contains({
-        lat: latitude,
-        lng: longitude,
+    console.log("[GeoAPI_Districts_Contains_GET] Fetching district containing point:", {
+        latitude,
+        longitude,
     });
 
+    const district = await geoQueries
+        .districts()
+        .containsPoint({
+            lat: latitude,
+            lng: longitude,
+        })
+        .findOne();
+
     if (!district) {
+        console.log(
+            "[GeoAPI_Districts_Contains_GET] No district found containing point."
+        );
         return NextResponse.json(null, { status: 200 });
     }
 
+    console.log("[GeoAPI_Districts_Contains_GET] District found:", {
+        id: district.id,
+        name: district.name,
+        ubigeo: district.ubigeo,
+    });
+
     if (format === "geojson") {
+        console.log(
+            "[GeoAPI_Districts_Contains_GET] Returning response in GeoJSON format"
+        );
         return NextResponse.json(
             toGeoJSON({
                 properties: {
@@ -70,6 +98,8 @@ export async function GET(req: NextRequest) {
             })
         );
     }
+
+    console.log("[GeoAPI_Districts_Contains_GET] Returning response in JSON format");
 
     return NextResponse.json({
         ubigeo: district.ubigeo,

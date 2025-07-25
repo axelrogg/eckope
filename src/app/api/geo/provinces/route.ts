@@ -6,28 +6,22 @@ import { httpErrorResponse } from "@/lib/http/error-response";
 import { toGeoJSON } from "@/lib/utils/to-geojson";
 
 const provinceQuerySchema = z.object({
-    codes: z
-        .array(
-            z
-                .string()
-                .trim()
-                .refine((val) => val.length === 4 && !isNaN(Number(val)), {
-                    message: "Each 'code' must be a 4-digit numeric string",
-                })
-        )
+    code: z
+        .string()
+        .trim()
+        .refine((val) => val.length === 4 && !isNaN(Number(val)), {
+            message: "Each 'code' must be a 4-digit numeric string",
+        })
         .optional(),
-    names: z.array(z.string().trim()).optional(),
-    departmentCodes: z
-        .array(
-            z
-                .string()
-                .trim()
-                .refine((val) => val.length === 2 && !isNaN(Number(val)), {
-                    message: "Each 'code' must be a 2-digit numeric string",
-                })
-        )
+    name: z.string().trim().optional(),
+    departmentCode: z
+        .string()
+        .trim()
+        .refine((val) => val.length === 2 && !isNaN(Number(val)), {
+            message: "Each 'code' must be a 2-digit numeric string",
+        })
         .optional(),
-    departmentNames: z.array(z.string().trim()).optional(),
+    departmentName: z.string().trim().optional(),
     format: z
         .string()
         .trim()
@@ -41,37 +35,69 @@ const provinceQuerySchema = z.object({
 
 export async function GET(req: NextRequest) {
     const { searchParams } = req.nextUrl;
-    const queryParseResult = provinceQuerySchema.safeParse({
-        codes: searchParams.getAll("code") || undefined,
-        names: searchParams.getAll("name") || undefined,
-        departmentCodes: searchParams.getAll("department_code") || undefined,
-        departmentNames: searchParams.getAll("department_name") || undefined,
+
+    const rawQuery = {
+        code: searchParams.get("code") || undefined,
+        name: searchParams.get("name") || undefined,
+        departmentCode: searchParams.get("department_code") || undefined,
+        departmentName: searchParams.get("department_name") || undefined,
         format: searchParams.get("format") || undefined,
-    });
+    };
+
+    console.log("[GeoAPI_Provinces_GET] Incoming request with query:", rawQuery);
+
+    const queryParseResult = provinceQuerySchema.safeParse(rawQuery);
 
     if (!queryParseResult.success) {
+        console.error(
+            "[GeoAPI_Provinces_GET] Query validation failed:",
+            z.treeifyError(queryParseResult.error)
+        );
         return httpErrorResponse({
             type: "about:blank",
             title: "Invalid query parameters",
             status: 400,
             detail: "One or more query parameters are invalid.",
-            errors: z.treeifyError(queryParseResult.error),
+            errors: {
+                code: 123, // TODO: Implement API error codes
+                ...z.treeifyError(queryParseResult.error),
+            },
             instance: req.nextUrl.pathname,
         });
     }
 
-    const { codes, names, departmentCodes, departmentNames, format } =
-        queryParseResult.data;
+    const { code, name, departmentCode, departmentName, format } = queryParseResult.data;
 
-    const provinces = await geoQueries.provinces.findMany({
-        codes,
-        names,
-        departmentCodes,
-        departmentNames,
+    console.log("[GeoAPI_Provinces_GET] Fetching provinces with filters:", {
+        code,
+        name,
+        departmentCode,
+        departmentName,
     });
-    if (!provinces) return NextResponse.json([], { status: 200 });
+
+    const provinces = await geoQueries
+        .provinces()
+        .where({
+            params: {
+                code,
+                name,
+                department: {
+                    code: departmentCode,
+                    name: departmentName,
+                },
+            },
+        })
+        .findMany();
+
+    console.log(`[GeoAPI_Provinces_GET] ${provinces.length} provinces found`);
+
+    if (!provinces || provinces.length === 0) {
+        console.log("[GeoAPI_Provinces_GET] No matching provinces found.");
+        return NextResponse.json([], { status: 200 });
+    }
 
     if (format === "geojson") {
+        console.log("[GeoAPI_Provinces_GET] Returning response in GeoJSON format");
         return NextResponse.json(
             toGeoJSON(
                 provinces.map((prov) => ({
@@ -94,6 +120,8 @@ export async function GET(req: NextRequest) {
             )
         );
     }
+
+    console.log("[GeoAPI_Provinces_GET] Returning response in JSON format");
 
     return NextResponse.json(
         provinces.map((prov) => ({
