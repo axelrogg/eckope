@@ -6,24 +6,63 @@ import L from "leaflet";
 import {
     MapContainer,
     TileLayer,
+    GeoJSON,
     useMap as useLeafletMap,
     useMapEvents,
     Marker,
 } from "react-leaflet";
+import { FeatureCollection } from "geojson";
 
+import { clickedPinIcon } from "@/components/map/map-icons";
+import { getContainingFeature } from "@/lib/geo/spatial";
 import { useMap } from "@/hooks";
 import { EcoPin } from "@/types/eco";
 
-const pinIcon = L.divIcon({
-    className: "",
-    html: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-dot"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="1"/></svg>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-});
+//const pinIcon = L.divIcon({
+//    className: "",
+//    html: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-dot"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="1"/></svg>`,
+//    iconSize: [32, 32],
+//    iconAnchor: [16, 32],
+//});
 
 export const MapCore = () => {
     const { location, showEcoPinCard, setShowEcoPinCard, setEcoPin } = useMap();
     const mapRef = React.useRef<L.Map | null>(null);
+    const [limaCallaoGeoFence, setLimaCallaoGeoFence] =
+        React.useState<GeoJSON.FeatureCollection | null>(null);
+    const [clickedPin, setClickedPin] = React.useState<{
+        latlng: L.LatLng;
+        insideGeoFence: boolean;
+    } | null>(null);
+    const clickedPinTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+    React.useEffect(() => {
+        const fetchGeoFence = async () => {
+            try {
+                const [limaRes, callaoRes] = await Promise.all([
+                    fetch("/api/geo/provinces?code=1501&name=Lima&format=geojson"),
+                    fetch("/api/geo/provinces?code=0701&name=Callao&format=geojson"),
+                ]);
+
+                if (!limaRes.ok || !callaoRes.ok) {
+                    console.error("Failed to fetch Lima or Callao geodata.");
+                    return;
+                }
+
+                const lima = (await limaRes.json()) as FeatureCollection;
+                const callao = (await callaoRes.json()) as FeatureCollection;
+
+                setLimaCallaoGeoFence({
+                    type: "FeatureCollection",
+                    features: [...lima.features, ...callao.features],
+                });
+            } catch (error) {
+                console.error("GeoFence fetch error:", error);
+            }
+        };
+
+        fetchGeoFence();
+    }, []);
 
     function flyToOffset(
         map: L.Map,
@@ -71,7 +110,25 @@ export const MapCore = () => {
     function MapClickHandler() {
         useMapEvents({
             click(e) {
-                console.log("Map clicked at:", e.latlng.lat, e.latlng.lng);
+                if (!limaCallaoGeoFence) return;
+                if (getContainingFeature(e.latlng, limaCallaoGeoFence)) {
+                    setClickedPin({
+                        latlng: e.latlng,
+                        insideGeoFence: true,
+                    });
+                } else {
+                    setClickedPin({
+                        latlng: e.latlng,
+                        insideGeoFence: false,
+                    }); // show it even if outside
+
+                    if (clickedPinTimeoutRef.current)
+                        clearTimeout(clickedPinTimeoutRef.current);
+
+                    clickedPinTimeoutRef.current = setTimeout(() => {
+                        setClickedPin(null);
+                    }, 1000);
+                }
             },
         });
         return null;
@@ -84,6 +141,7 @@ export const MapCore = () => {
                 zoom={10}
                 className="absolute top-0 left-0 z-0 h-full w-full"
                 zoomControl={false}
+                preferCanvas
             >
                 <TileLayer
                     url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -91,28 +149,32 @@ export const MapCore = () => {
                 />
                 <MapRefHandler />
 
-                <Marker
-                    position={[-12.0464, -77.0428]}
-                    icon={pinIcon}
-                    riseOnHover={true}
-                    eventHandlers={{
-                        click: () => {
-                            setEcoPin(exampleEcoPin);
-                            setShowEcoPinCard(!showEcoPinCard);
-                            if (mapRef.current) {
-                                flyToOffset(
-                                    mapRef.current,
-                                    [-12.0464, -77.0428],
-                                    17,
-                                    250
-                                );
-                            }
-                        },
-                    }}
-                />
+                {clickedPin && (
+                    <Marker
+                        position={clickedPin.latlng}
+                        icon={clickedPinIcon}
+                        eventHandlers={{
+                            add: () => {
+                                if (mapRef.current && clickedPin.insideGeoFence) {
+                                    flyToOffset(
+                                        mapRef.current,
+                                        clickedPin.latlng,
+                                        17,
+                                        250
+                                    );
+                                }
+                            },
+                            click: () => {
+                                setEcoPin(exampleEcoPin);
+                                setShowEcoPinCard(!showEcoPinCard);
+                            },
+                        }}
+                    />
+                )}
 
                 <MapSearchHandler />
                 <MapClickHandler />
+                {limaCallaoGeoFence && <GeoJSON data={limaCallaoGeoFence} />}
             </MapContainer>
         </React.Fragment>
     );
