@@ -5,14 +5,24 @@ import * as React from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { RotateCcw, SlidersHorizontal } from "lucide-react";
 
-import { cn } from "@/lib/utils/cn";
-import { useMap } from "@/hooks";
 import { ComboBox, ComboboxOption } from "@/components/ui/combobox";
 import { Button } from "@/components/ui/button";
-import { MapSearchBar } from "./map-search-bar";
+import { MapSearchBar } from "@/components/map/map-search-bar";
+import { cn } from "@/lib/utils/cn";
+import { useMap } from "@/hooks";
+import { PeruDepartment, PeruDistrict, PeruProvince } from "@/types/database";
+
+type PeruDepartmentResponse = Omit<PeruDepartment, "geometry">;
+type PeruProvinceResponse = Omit<PeruProvince, "geometry">;
+type PeruDistrictResponse = Omit<PeruDistrict, "geometry">;
 
 export const MapToolBar = () => {
     const { showEcoPinCard } = useMap();
+
+    const [departments, setDepartments] = React.useState<PeruDepartmentResponse[]>([]);
+    const [provinces, setProvinces] = React.useState<PeruProvinceResponse[]>([]);
+    const [districts, setDistricts] = React.useState<PeruDistrictResponse[]>([]);
+
     const [selectedDepartment, setSelectedDepartment] = React.useState<string>("");
     const [selectedProvince, setSelectedProvince] = React.useState<string>("");
     const [selectedDistrict, setSelectedDistrict] = React.useState<string>("");
@@ -22,6 +32,54 @@ export const MapToolBar = () => {
         province: false,
         district: false,
     });
+
+    React.useEffect(() => {
+        const fetchPeruDepartments = async () => {
+            console.log("[MapToolBar] Fetching departments...");
+            const result = await fetch("/api/geo/departments");
+            if (!result.ok) {
+                console.error("didnt work"); // TODO: Remove this
+                return;
+            }
+            const departments = (await result.json()) as PeruDepartmentResponse[];
+            setDepartments(departments);
+        };
+        fetchPeruDepartments();
+    }, []);
+
+    React.useEffect(() => {
+        if (selectedDepartment === "") return;
+
+        const fetchPeruProvinces = async () => {
+            const result = await fetch(
+                `/api/geo/provinces?department_code=${selectedDepartment}`
+            );
+            if (!result.ok) {
+                console.error("didnt work"); // TODO: Remove this
+                return;
+            }
+            const provinces = (await result.json()) as PeruProvinceResponse[];
+            setProvinces(provinces);
+        };
+        fetchPeruProvinces();
+    }, [selectedDepartment]);
+
+    React.useEffect(() => {
+        if (selectedProvince === "") return;
+
+        const fetchPeruDistricts = async () => {
+            const result = await fetch(
+                `/api/geo/districts?department_code=${selectedDepartment}&province_code=${selectedProvince}`
+            );
+            if (!result.ok) {
+                console.error("didnt work");
+                return;
+            }
+            const districts = (await result.json()) as PeruDistrictResponse[];
+            setDistricts(districts);
+        };
+        fetchPeruDistricts();
+    }, [selectedDepartment, selectedProvince]);
 
     const anyFiltersVisible =
         visibility.department || visibility.province || visibility.district;
@@ -87,7 +145,7 @@ export const MapToolBar = () => {
         const { department, province, district } = visibility;
 
         if (department || province || district) {
-            // If any are visible, hide all
+            // If any are visible, hide all filter buttons
             setVisibility({ department: false, province: false, district: false });
         } else {
             // Open appropriate levels based on selection state
@@ -117,7 +175,10 @@ export const MapToolBar = () => {
                     <AnimatedCombobox
                         placeholder="Selecciona el departamento"
                         show={visibility.department}
-                        options={peruvianRegions}
+                        options={departments.map((dep) => ({
+                            value: dep.code,
+                            label: dep.name,
+                        }))}
                         setOption={handleDepartmentSelect}
                         selectedOption={selectedDepartment}
                     />
@@ -134,7 +195,10 @@ export const MapToolBar = () => {
                     <AnimatedCombobox
                         placeholder="Selecciona la provincia"
                         show={visibility.province}
-                        options={peruvianRegions}
+                        options={provinces.map((prov) => ({
+                            value: prov.code,
+                            label: prov.name,
+                        }))}
                         setOption={handleProvinceSelect}
                         selectedOption={selectedProvince}
                     />
@@ -147,7 +211,10 @@ export const MapToolBar = () => {
                     <AnimatedCombobox
                         placeholder="Selecciona el distrito"
                         show={visibility.district}
-                        options={peruvianRegions}
+                        options={districts.map((dist) => ({
+                            value: dist.ubigeo,
+                            label: dist.name,
+                        }))}
                         setOption={handleDistrictSelect}
                         selectedOption={selectedDistrict}
                     />
@@ -213,31 +280,3 @@ const AnimatedCombobox = ({
         </AnimatePresence>
     );
 };
-
-const peruvianRegions: ComboboxOption[] = [
-    { value: "amazonas", label: "La provincia con un nombre super largo" },
-    { value: "ancash", label: "Áncash" },
-    { value: "apurimac", label: "Apurímac" },
-    { value: "arequipa", label: "Arequipa" },
-    { value: "ayacucho", label: "Ayacucho" },
-    { value: "cajamarca", label: "Cajamarca" },
-    { value: "callao", label: "Callao" },
-    { value: "cusco", label: "Cusco" },
-    { value: "huancavelica", label: "Huancavelica" },
-    { value: "huanuco", label: "Huánuco" },
-    { value: "ica", label: "Ica" },
-    { value: "junin", label: "Junín" },
-    { value: "la_libertad", label: "La Libertad" },
-    { value: "lambayeque", label: "Lambayeque" },
-    { value: "lima", label: "Lima" },
-    { value: "loreto", label: "Loreto" },
-    { value: "madre_de_dios", label: "Madre de Dios" },
-    { value: "moquegua", label: "Moquegua" },
-    { value: "pasco", label: "Pasco" },
-    { value: "piura", label: "Piura" },
-    { value: "puno", label: "Puno" },
-    { value: "san_martin", label: "San Martín" },
-    { value: "tacna", label: "Tacna" },
-    { value: "tumbes", label: "Tumbes" },
-    { value: "ucayali", label: "Ucayali" },
-];
