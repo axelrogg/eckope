@@ -10,7 +10,6 @@ import {
     Card,
     CardAction,
     CardContent,
-    CardDescription,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
@@ -55,15 +54,13 @@ export const MapNote = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.3 }}
-                    className="absolute top-2 left-1/4 z-[99]"
+                    className="absolute top-2 left-1/4 z-[99] w-1/2"
                 >
                     <Card className="bg-background">
                         <CardHeader>
-                            <CardTitle>Búsqueda de lugares limitada a Lima</CardTitle>
-                            <CardDescription>
-                                La versión actual de Éckope se enfoca exclusivamente en la
-                                ciudad de Lima.
-                            </CardDescription>
+                            <CardTitle>
+                                Búsqueda de lugares limitada a Lima y Callao
+                            </CardTitle>
                             <CardAction>
                                 <Button
                                     variant="ghost"
@@ -75,6 +72,9 @@ export const MapNote = () => {
                             </CardAction>
                         </CardHeader>
                         <CardContent>
+                            La versión actual de Éckope se enfoca exclusivamente en las
+                            provincias de Lima y Callao.
+                            <br />
                             Agradecemos tu comprensión. Nos expandiremos tan pronto como
                             podamos.
                             <br />
