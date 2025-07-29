@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 
 import "./globals.css";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Toaster } from "sonner";
 
 const font = Space_Grotesk({
     subsets: ["latin"],
@@ -35,6 +36,7 @@ export default async function RootLayout({
                         <SidebarTrigger className="absolute top-2 left-2 md:hidden" />
                         {children}
                     </main>
+                    <Toaster position="top-center" />
                 </SidebarProvider>
             </body>
         </html>
