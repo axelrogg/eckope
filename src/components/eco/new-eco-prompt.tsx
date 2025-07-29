@@ -16,7 +16,12 @@ import { X } from "lucide-react";
 import { NominatimResult } from "@/types/nominatim";
 
 export const NewEcoPrompt = () => {
-    const { newEcoPinLocation, showNewEcoPinPrompt, setShowNewEcoPinPrompt } = useMap();
+    const {
+        newEcoPinLocation,
+        showNewEcoPinPrompt,
+        setShowNewEcoPinPrompt,
+        setShowNewEcoSidePanel,
+    } = useMap();
 
     const [locationResult, setLocationResult] = React.useState<NominatimResult | null>(
         null
@@ -77,8 +82,20 @@ export const NewEcoPrompt = () => {
                             </CardAction>
                         </CardHeader>
                         <CardContent className="space-x-3">
-                            <Button variant="secondary">Sí, reportar aquí</Button>
-                            <Button>Cancelar</Button>
+                            <Button
+                                onClick={() => {
+                                    setShowNewEcoPinPrompt(false);
+                                    setShowNewEcoSidePanel(true);
+                                }}
+                            >
+                                Sí, reportar aquí
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={() => setShowNewEcoPinPrompt(false)}
+                            >
+                                Cancelar
+                            </Button>
                         </CardContent>
                     </Card>
                 </motion.div>

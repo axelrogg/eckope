@@ -1,18 +1,22 @@
 "use client";
 
+import * as React from "react";
 import { EcoPin } from "@/types/eco";
 import { MapContextType, MapLocation } from "@/types/map";
-import { createContext, useState } from "react";
 
-export const MapContext = createContext<MapContextType | null>(null);
+export const MapContext = React.createContext<MapContextType | null>(null);
 
 export const MapProvider = ({ children }: { children: React.ReactNode }) => {
-    const [location, setLocation] = useState<MapLocation | null>(null);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [selectedEcoPin, setSelectedEcoPin] = useState<EcoPin | null>(null);
-    const [showEcoPinPanel, setShowEcoPinPanel] = useState(false);
-    const [newEcoPinLocation, setNewEcoPinLocation] = useState<MapLocation | null>(null);
-    const [showNewEcoPinPrompt, setShowNewEcoPinPrompt] = useState(false);
+    const [location, setLocation] = React.useState<MapLocation | null>(null);
+    const [searchQuery, setSearchQuery] = React.useState("");
+    const [selectedEcoPin, setSelectedEcoPin] = React.useState<EcoPin | null>(null);
+    const [showEcoPinPanel, setShowEcoPinPanel] = React.useState(false);
+    const [newEcoPinLocation, setNewEcoPinLocation] = React.useState<MapLocation | null>(
+        null
+    );
+    const [showNewEcoPinPrompt, setShowNewEcoPinPrompt] = React.useState(false);
+
+    const [showNewEcoSidePanel, setShowNewEcoSidePanel] = React.useState(false);
 
     const providerValue = {
         location,
@@ -27,6 +31,8 @@ export const MapProvider = ({ children }: { children: React.ReactNode }) => {
         setNewEcoPinLocation,
         showNewEcoPinPrompt,
         setShowNewEcoPinPrompt,
+        showNewEcoSidePanel,
+        setShowNewEcoSidePanel,
     };
 
     return <MapContext.Provider value={providerValue}>{children}</MapContext.Provider>;

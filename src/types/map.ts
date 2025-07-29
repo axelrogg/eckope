@@ -18,6 +18,8 @@ export type MapContextType = {
     setNewEcoPinLocation: (value: MapLocation | null) => void;
     showNewEcoPinPrompt: boolean;
     setShowNewEcoPinPrompt: (value: boolean) => void;
+    showNewEcoSidePanel: boolean;
+    setShowNewEcoSidePanel: (value: boolean) => void;
 };
 
 export type MapLocationSearchResponseAddress = {
