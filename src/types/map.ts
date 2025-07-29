@@ -10,10 +10,14 @@ export type MapContextType = {
     setLocation: (location: MapLocation | null) => void;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
-    ecoPin: EcoPin | null;
-    setEcoPin: (ecoPin: EcoPin | null) => void;
-    showEcoPinCard: boolean;
-    setShowEcoPinCard: (value: boolean) => void;
+    selectedEcoPin: EcoPin | null;
+    setSelectedEcoPin: (ecoPin: EcoPin | null) => void;
+    showEcoPinPanel: boolean;
+    setShowEcoPinPanel: (value: boolean) => void;
+    newEcoPinLocation: MapLocation | null;
+    setNewEcoPinLocation: (value: MapLocation | null) => void;
+    showNewEcoPinPrompt: boolean;
+    setShowNewEcoPinPrompt: (value: boolean) => void;
 };
 
 export type MapLocationSearchResponseAddress = {

@@ -75,8 +75,7 @@ export const MapNote = () => {
                             La versión actual de Éckope se enfoca exclusivamente en las
                             provincias de Lima y Callao.
                             <br />
-                            Agradecemos tu comprensión. Nos expandiremos tan pronto como
-                            podamos.
+                            Nos expandiremos tan pronto como podamos.
                             <br />
                             <Button
                                 variant="link"

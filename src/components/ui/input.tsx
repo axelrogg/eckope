@@ -12,7 +12,7 @@ function Input({ className, type, ...props }: ComponentProps<"input">) {
                 /* File related classes */
                 "file:text-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium",
                 /* Placeholder and selection */
-                "placeholder:text-muted selection:bg-accent selection:text-primary-foreground",
+                "placeholder:text-muted selection:bg-accent selection:text-primary-foreground placeholder:italic",
                 "transition-[color,box-shadow] outline-none md:text-sm",
                 /* Disabled */
                 "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",

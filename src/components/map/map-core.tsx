@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import {
@@ -12,6 +13,7 @@ import {
     Marker,
 } from "react-leaflet";
 import { FeatureCollection } from "geojson";
+import { toast } from "sonner";
 
 import { clickedPinIcon } from "@/components/map/map-icons";
 import { getContainingFeature } from "@/lib/geo/spatial";
@@ -24,16 +26,29 @@ import { EcoPin } from "@/types/eco";
 //    iconSize: [32, 32],
 //    iconAnchor: [16, 32],
 //});
+//
+
+type ClickedPin = {
+    latlng: L.LatLng;
+    insideGeoFence: boolean;
+};
 
 export const MapCore = () => {
-    const { location, showEcoPinCard, setShowEcoPinCard, setEcoPin } = useMap();
-    const mapRef = React.useRef<L.Map | null>(null);
+    const {
+        location,
+        showEcoPinPanel,
+        setShowEcoPinPanel,
+        setSelectedEcoPin,
+        setNewEcoPinLocation,
+        showNewEcoPinPrompt,
+        setShowNewEcoPinPrompt,
+    } = useMap();
+
     const [limaCallaoGeoFence, setLimaCallaoGeoFence] =
-        React.useState<GeoJSON.FeatureCollection | null>(null);
-    const [clickedPin, setClickedPin] = React.useState<{
-        latlng: L.LatLng;
-        insideGeoFence: boolean;
-    } | null>(null);
+        React.useState<FeatureCollection | null>(null);
+    const [clickedPin, setClickedPin] = React.useState<ClickedPin | null>(null);
+
+    const mapRef = React.useRef<L.Map | null>(null);
     const clickedPinTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
     React.useEffect(() => {
@@ -64,30 +79,37 @@ export const MapCore = () => {
         fetchGeoFence();
     }, []);
 
-    function flyToOffset(
-        map: L.Map,
-        latlng: L.LatLngExpression,
-        finalZoom = 17,
-        offsetX = 300
-    ) {
-        const currentZoom = map.getZoom();
-        const currentCenter = map.getCenter();
-        const projectedCenter = map.project(currentCenter, currentZoom);
-        const shiftedPoint = projectedCenter.add([offsetX, 0]);
-        const shiftedLatLng = map.unproject(shiftedPoint, currentZoom);
+    React.useEffect(() => {
+        if (!showNewEcoPinPrompt) {
+            setNewEcoPinLocation(null);
+            setClickedPin(null);
+        }
+    }, [showNewEcoPinPrompt]);
 
-        // Step 1: pan slightly to the right to make space for the panel
-        map.flyTo(shiftedLatLng, currentZoom);
+    //function flyToOffset(
+    //    map: L.Map,
+    //    latlng: L.LatLngExpression,
+    //    finalZoom = 17,
+    //    offsetX = 300
+    //) {
+    //    const currentZoom = map.getZoom();
+    //    const currentCenter = map.getCenter();
+    //    const projectedCenter = map.project(currentCenter, currentZoom);
+    //    const shiftedPoint = projectedCenter.add([offsetX, 0]);
+    //    const shiftedLatLng = map.unproject(shiftedPoint, currentZoom);
 
-        // Step 2: after a delay, zoom in while keeping marker offset
-        setTimeout(() => {
-            const targetPoint = map.project(latlng, finalZoom);
-            const offsetPoint = targetPoint.add([offsetX, 0]);
-            const finalCenter = map.unproject(offsetPoint, finalZoom);
+    //    // Step 1: pan slightly to the right to make space for the panel
+    //    map.flyTo(shiftedLatLng, currentZoom);
 
-            map.flyTo(finalCenter, finalZoom);
-        }, 800); // should match or slightly exceed duration of first flyTo
-    }
+    //    // Step 2: after a delay, zoom in while keeping marker offset
+    //    setTimeout(() => {
+    //        const targetPoint = map.project(latlng, finalZoom);
+    //        const offsetPoint = targetPoint.add([offsetX, 0]);
+    //        const finalCenter = map.unproject(offsetPoint, finalZoom);
+
+    //        map.flyTo(finalCenter, finalZoom);
+    //    }, 800); // should match or slightly exceed duration of first flyTo
+    //}
 
     function MapRefHandler() {
         const map = useLeafletMap();
@@ -116,18 +138,30 @@ export const MapCore = () => {
                         latlng: e.latlng,
                         insideGeoFence: true,
                     });
+                    setNewEcoPinLocation({
+                        lat: e.latlng.lat,
+                        lng: e.latlng.lng,
+                    });
+                    setShowNewEcoPinPrompt(true);
                 } else {
+                    // If the user clicks outside geofence show it for feedback
+                    // but take it away quickly and show an error toast
                     setClickedPin({
                         latlng: e.latlng,
                         insideGeoFence: false,
-                    }); // show it even if outside
+                    });
 
                     if (clickedPinTimeoutRef.current)
                         clearTimeout(clickedPinTimeoutRef.current);
 
+                    toast.warning("Uy, muy lejos", {
+                        description:
+                            "Por ahora no puedes crear pins fuera de Lima y Callao.",
+                    });
+
                     clickedPinTimeoutRef.current = setTimeout(() => {
                         setClickedPin(null);
-                    }, 1000);
+                    }, 2000);
                 }
             },
         });
@@ -137,7 +171,7 @@ export const MapCore = () => {
     return (
         <React.Fragment>
             <MapContainer
-                center={[-12.12, -77.1]}
+                center={[-12, -77.1]}
                 zoom={10}
                 className="absolute top-0 left-0 z-0 h-full w-full"
                 zoomControl={false}
@@ -154,19 +188,9 @@ export const MapCore = () => {
                         position={clickedPin.latlng}
                         icon={clickedPinIcon}
                         eventHandlers={{
-                            add: () => {
-                                if (mapRef.current && clickedPin.insideGeoFence) {
-                                    flyToOffset(
-                                        mapRef.current,
-                                        clickedPin.latlng,
-                                        17,
-                                        250
-                                    );
-                                }
-                            },
                             click: () => {
-                                setEcoPin(exampleEcoPin);
-                                setShowEcoPinCard(!showEcoPinCard);
+                                setSelectedEcoPin(exampleEcoPin);
+                                setShowEcoPinPanel(!showEcoPinPanel);
                             },
                         }}
                     />

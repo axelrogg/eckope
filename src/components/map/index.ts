@@ -1,6 +1,6 @@
 import { MapClient } from "./map-client";
-import { MapSearchBar } from "./map-search-bar";
+import { MapSearchBar } from "@/components/map/tool-bar/search/search-bar";
 import { MapContext, MapProvider } from "./map-provider";
-import { MapToolBar } from "./map-tool-bar";
+import { MapToolBar } from "./tool-bar/map-tool-bar";
 
 export { MapClient, MapContext, MapProvider, MapSearchBar, MapToolBar };

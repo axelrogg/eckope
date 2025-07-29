@@ -26,23 +26,23 @@ import { EcoContent } from "./eco-content";
 import { useMap } from "@/hooks";
 
 export const EcoPinPanel = () => {
-    const { ecoPin, showEcoPinCard, setShowEcoPinCard } = useMap();
+    const { selectedEcoPin, showEcoPinPanel, setShowEcoPinPanel } = useMap();
 
     React.useEffect(() => {
-        if (showEcoPinCard) {
+        if (showEcoPinPanel) {
             document.body.style.overflow = "hidden";
         }
-    }, [showEcoPinCard]);
+    }, [showEcoPinPanel]);
 
     const handleAnimationComplete = () => {
-        if (!showEcoPinCard) {
+        if (!showEcoPinPanel) {
             document.body.style.overflow = "";
         }
     };
 
     return (
         <AnimatePresence>
-            {ecoPin && showEcoPinCard && (
+            {selectedEcoPin && showEcoPinPanel && (
                 <motion.div
                     className="absolute top-0 right-0 z-50 h-svh bg-transparent p-2 lg:w-120"
                     role="dialog"
@@ -56,11 +56,13 @@ export const EcoPinPanel = () => {
                     <ScrollArea className="h-full rounded-xl">
                         <Card className="h-full">
                             <CardHeader>
-                                <CardTitle className="text-xl">{ecoPin.title}</CardTitle>
+                                <CardTitle className="text-xl">
+                                    {selectedEcoPin.title}
+                                </CardTitle>
                                 <CardDescription className="flex flex-col space-y-2">
                                     <EcoAuthor
-                                        author={ecoPin.author}
-                                        createdAt={ecoPin.createdAt}
+                                        author={selectedEcoPin.author}
+                                        createdAt={selectedEcoPin.createdAt}
                                     />
                                     <Badge variant="secondary">En revisión</Badge>
                                 </CardDescription>
@@ -69,7 +71,7 @@ export const EcoPinPanel = () => {
                                         aria-label="Cerrar el panel de eco"
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => setShowEcoPinCard(false)}
+                                        onClick={() => setShowEcoPinPanel(false)}
                                     >
                                         <X />
                                     </Button>
@@ -77,7 +79,10 @@ export const EcoPinPanel = () => {
                             </CardHeader>
                             <CardContent className="space-y-7 text-sm">
                                 <div className="space-y-3">
-                                    <EcoContent content={ecoPin.content} maxLines={15} />
+                                    <EcoContent
+                                        content={selectedEcoPin.content}
+                                        maxLines={15}
+                                    />
                                     <EcoControls
                                         upvotes={20}
                                         downvotes={20}
@@ -86,7 +91,7 @@ export const EcoPinPanel = () => {
                                     <EcoPanelReplyForm />
                                 </div>
                                 <React.Fragment>
-                                    {ecoPin.ecos.map((eco, i) => (
+                                    {selectedEcoPin.ecos.map((eco, i) => (
                                         <React.Fragment key={i}>
                                             <Eco
                                                 replies={eco.replies}
@@ -96,7 +101,7 @@ export const EcoPinPanel = () => {
                                                 author={eco.author}
                                                 createdAt={eco.createdAt}
                                             />
-                                            {i < ecoPin.ecos.length - 1 && (
+                                            {i < selectedEcoPin.ecos.length - 1 && (
                                                 <Separator className="my-2" />
                                             )}
                                         </React.Fragment>
