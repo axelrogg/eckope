@@ -1,25 +1,6 @@
-import { EcoPin } from "./eco";
-
 export type MapLocation = {
     lat: number;
     lng: number;
-};
-
-export type MapContextType = {
-    location: MapLocation | null;
-    setLocation: (location: MapLocation | null) => void;
-    searchQuery: string;
-    setSearchQuery: (query: string) => void;
-    selectedEcoPin: EcoPin | null;
-    setSelectedEcoPin: (ecoPin: EcoPin | null) => void;
-    showEcoPinPanel: boolean;
-    setShowEcoPinPanel: (value: boolean) => void;
-    newEcoPinLocation: MapLocation | null;
-    setNewEcoPinLocation: (value: MapLocation | null) => void;
-    showNewEcoPinPrompt: boolean;
-    setShowNewEcoPinPrompt: (value: boolean) => void;
-    showNewEcoSidePanel: boolean;
-    setShowNewEcoSidePanel: (value: boolean) => void;
 };
 
 export type MapLocationSearchResponseAddress = {

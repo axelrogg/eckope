@@ -19,6 +19,7 @@ import { clickedPinIcon } from "@/components/map/map-icons";
 import { getContainingFeature } from "@/lib/geo/spatial";
 import { useMap } from "@/hooks";
 import { EcoPin } from "@/types/eco";
+import { useSidePanel } from "@/hooks/use-side-panel";
 
 //const pinIcon = L.divIcon({
 //    className: "",
@@ -34,15 +35,8 @@ type ClickedPin = {
 };
 
 export const MapCore = () => {
-    const {
-        location,
-        showEcoPinPanel,
-        setShowEcoPinPanel,
-        setSelectedEcoPin,
-        setNewEcoPinLocation,
-        showNewEcoPinPrompt,
-        setShowNewEcoPinPrompt,
-    } = useMap();
+    const { location, setActivePin, setPendingPin } = useMap();
+    const { openPanel, currentPanel } = useSidePanel();
 
     const [limaCallaoGeoFence, setLimaCallaoGeoFence] =
         React.useState<FeatureCollection | null>(null);
@@ -80,11 +74,11 @@ export const MapCore = () => {
     }, []);
 
     React.useEffect(() => {
-        if (!showNewEcoPinPrompt) {
-            setNewEcoPinLocation(null);
+        if (!currentPanel) {
+            setPendingPin(null);
             setClickedPin(null);
         }
-    }, [showNewEcoPinPrompt]);
+    }, [currentPanel]);
 
     //function flyToOffset(
     //    map: L.Map,
@@ -125,7 +119,7 @@ export const MapCore = () => {
             if (location) {
                 map.flyTo([location.lat, location.lng], 17);
             }
-        }, [location, map]);
+        }, [map]);
         return null;
     }
 
@@ -138,11 +132,11 @@ export const MapCore = () => {
                         latlng: e.latlng,
                         insideGeoFence: true,
                     });
-                    setNewEcoPinLocation({
+                    setPendingPin({
                         lat: e.latlng.lat,
                         lng: e.latlng.lng,
                     });
-                    setShowNewEcoPinPrompt(true);
+                    openPanel("newEcoPrompt");
                 } else {
                     // If the user clicks outside geofence show it for feedback
                     // but take it away quickly and show an error toast
@@ -156,7 +150,7 @@ export const MapCore = () => {
 
                     toast.warning("Uy, muy lejos", {
                         description:
-                            "Por ahora no puedes crear pins fuera de Lima y Callao.",
+                            "Por ahora no puedes crear ecos fuera de Lima y Callao.",
                     });
 
                     clickedPinTimeoutRef.current = setTimeout(() => {
@@ -189,8 +183,8 @@ export const MapCore = () => {
                         icon={clickedPinIcon}
                         eventHandlers={{
                             click: () => {
-                                setSelectedEcoPin(exampleEcoPin);
-                                setShowEcoPinPanel(!showEcoPinPanel);
+                                setActivePin(exampleEcoPin);
+                                openPanel("ecoPin");
                             },
                         }}
                     />

@@ -6,13 +6,13 @@ import { useMapGeoFilter } from "@/hooks/use-map-geo-filter";
 
 export const MapGeoFilter = () => {
     const {
-        peruGeoOptions,
-        peruGeoSelected,
+        geoOptions,
+        geoSelection,
         visibility,
         handleDepartmentSelect,
         handleProvinceSelect,
         handleDistrictSelect,
-        onClickResetFilterButton,
+        resetFilters,
     } = useMapGeoFilter();
 
     return (
@@ -21,19 +21,19 @@ export const MapGeoFilter = () => {
                 <AnimatedCombobox
                     placeholder="Selecciona el departamento"
                     show={visibility.department}
-                    options={peruGeoOptions.departmentList.map((dep) => ({
+                    options={geoOptions.departmentList.map((dep) => ({
                         value: dep.code,
                         label: dep.name,
                     }))}
                     setOption={handleDepartmentSelect}
-                    selectedOption={peruGeoSelected.departmentCode}
+                    selectedOption={geoSelection.departmentCode}
                 />
                 <ResetMapGeoFilterButton
                     show={
                         visibility.department &&
                         !(visibility.province || visibility.district)
                     }
-                    onClick={onClickResetFilterButton}
+                    onClick={resetFilters}
                 />
             </div>
             <div
@@ -42,16 +42,16 @@ export const MapGeoFilter = () => {
                 <AnimatedCombobox
                     placeholder="Selecciona la provincia"
                     show={visibility.province}
-                    options={peruGeoOptions.provinceList.map((prov) => ({
+                    options={geoOptions.provinceList.map((prov) => ({
                         value: prov.code,
                         label: prov.name,
                     }))}
                     setOption={handleProvinceSelect}
-                    selectedOption={peruGeoSelected.provinceCode}
+                    selectedOption={geoSelection.provinceCode}
                 />
                 <ResetMapGeoFilterButton
                     show={visibility.province && !visibility.district}
-                    onClick={onClickResetFilterButton}
+                    onClick={resetFilters}
                 />
             </div>
 
@@ -61,17 +61,17 @@ export const MapGeoFilter = () => {
                 <AnimatedCombobox
                     placeholder="Selecciona el distrito"
                     show={visibility.district}
-                    options={peruGeoOptions.districtList.map((dist) => ({
+                    options={geoOptions.districtList.map((dist) => ({
                         value: dist.ubigeo,
                         label: dist.name,
                     }))}
                     setOption={handleDistrictSelect}
-                    selectedOption={peruGeoSelected.districtUbigeo}
+                    selectedOption={geoSelection.districtUbigeo}
                 />
                 <div className="xl:hidden">
                     <ResetMapGeoFilterButton
                         show={visibility.district}
-                        onClick={onClickResetFilterButton}
+                        onClick={resetFilters}
                     />
                 </div>
             </div>

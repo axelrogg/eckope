@@ -4,20 +4,9 @@ import * as React from "react";
 
 import z from "zod";
 import { AnimatePresence, motion } from "motion/react";
-import { X } from "lucide-react";
+import { Map, X } from "lucide-react";
 
-import {
-    Card,
-    CardAction,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-
-import { useMap } from "@/hooks";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -28,17 +17,28 @@ import {
     FormItem,
     FormLabel,
     FormMessage,
-} from "../ui/form";
-import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "../ui/select";
-import { Switch } from "../ui/switch";
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import {
+    SidePanel,
+    SidePanelAction,
+    SidePanelContent,
+    SidePanelDescription,
+    SidePanelHeader,
+    SidePanelTitle,
+} from "@/components/side-panel/side-panel";
+import { useSidePanel } from "@/hooks/use-side-panel";
+import { useMap } from "@/hooks";
+import { NominatimResult } from "@/types/nominatim";
 
 const CATEGORY_OPTS: { label: string; value: string }[] = [
     {
@@ -71,29 +71,75 @@ const CATEGORY_OPTS: { label: string; value: string }[] = [
     },
 ];
 
-const formSchema = z.object({
-    title: z
-        .string()
-        .min(4, "El título es demasiado corto.")
-        .max(300, "El título es demasiado largo."),
-    description: z
-        .string()
-        .min(10, "Por favor, brinda más contexto")
-        .max(40000, "La descripción es demasiado larga."),
-    category: z.string(),
-    location: z.object({
-        lat: z.number().min(-90).max(90),
-        lng: z.number().min(-180).max(180),
-    }),
-    email: z.email().optional(),
-    alias: z.string().max(100, "El alias es demasiado largo.").optional(),
-    anonymous: z.boolean().optional(),
-});
+const formSchema = z
+    .object({
+        title: z
+            .string()
+            .min(4, "El título es demasiado corto.")
+            .max(300, "El título es demasiado largo."),
+        description: z
+            .string()
+            .min(10, "Por favor, brinda más contexto")
+            .max(40000, "La descripción es demasiado larga."),
+        category: z.string(),
+        customCategory: z.string().optional(),
+        location: z.object({
+            lat: z.number(),
+            lng: z.number(),
+        }),
+        email: z.email().optional(),
+        alias: z.string().max(100, "El alias es demasiado largo.").optional(),
+        anonymous: z.boolean().optional(),
+    })
+    .check((ctx) => {
+        if (
+            ctx.value.category === "other" &&
+            (!ctx.value.customCategory || ctx.value.customCategory.trim() === "")
+        ) {
+            ctx.issues.push({
+                code: "custom",
+                path: ["customCategory"],
+                message: "Por favor, indica la categoría",
+                input: ctx.value,
+            });
+        }
+        if (ctx.value.location.lat === 999 || ctx.value.location.lng === 999) {
+            ctx.issues.push({
+                code: "custom",
+                message: "Por favor selecciona una ubicación válida",
+                path: ["location"],
+                input: ctx.value,
+            });
+        }
+    });
 
 type SchemaType = z.infer<typeof formSchema>;
 
 export const NewEcoSidePanel = () => {
-    const { showNewEcoSidePanel, setShowNewEcoSidePanel } = useMap();
+    const { isPanelOpen, closeAllPanels } = useSidePanel();
+    const { pendingPin } = useMap();
+    const [locationResult, setLocationResult] = React.useState<NominatimResult | null>(
+        null
+    );
+
+    React.useEffect(() => {
+        const fetchAddressFromCoordinates = async (lat: number, lng: number) => {
+            const result = await fetch(
+                `${process.env.NEXT_PUBLIC_NOMINATIM_URL}/reverse?lat=${lat}&lon=${lng}&format=json`
+            );
+            if (!result.ok) {
+                console.error("not okay");
+                return;
+            }
+            const body = (await result.json()) as NominatimResult;
+            console.log(body);
+            setLocationResult(body);
+        };
+
+        if (pendingPin) {
+            fetchAddressFromCoordinates(pendingPin.lat, pendingPin.lng);
+        }
+    }, [pendingPin]);
 
     const form = useForm<SchemaType>({
         resolver: zodResolver(formSchema),
@@ -111,262 +157,268 @@ export const NewEcoSidePanel = () => {
         },
     });
 
+    const selectedCategory = form.watch("category");
     const stayAnonymous = form.watch("anonymous");
 
-    React.useEffect(() => {
-        if (showNewEcoSidePanel) {
-            document.body.style.overflow = "hidden";
-        }
-    }, [showNewEcoSidePanel]);
+    function onSubmit(values: SchemaType) {
+        const finalCategory =
+            values.category === "other" ? values.customCategory : values.category;
 
-    const handleAnimationComplete = () => {
-        if (!showNewEcoSidePanel) {
-            document.body.style.overflow = "";
-        }
-    };
-
-    function onSubmit() {}
+        const submission = {
+            ...values,
+            category: finalCategory,
+            customCategory: undefined, // remove from payload
+        };
+        console.log("submission", submission);
+    }
 
     return (
-        <AnimatePresence>
-            {showNewEcoSidePanel && (
-                <motion.div
-                    className="absolute top-0 right-0 z-50 h-svh bg-transparent p-2 lg:w-120"
-                    role="dialog"
-                    aria-modal="true"
-                    initial={{ x: "100%", opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: "100%", opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    onAnimationComplete={handleAnimationComplete}
-                >
-                    <ScrollArea className="h-full rounded-xl">
-                        <Card className="h-full">
-                            <CardHeader>
-                                <CardTitle className="text-xl">
-                                    ¿Qué eco quieres hacer sonar?
-                                </CardTitle>
-                                <CardDescription className="flex flex-col space-y-2">
-                                    Cuéntanos lo que está pasando. No tengas miedo de ser
-                                    claro y directo. Cuanto más detalles, mejor.
-                                </CardDescription>
-                                <CardAction>
-                                    <Button
-                                        aria-label="Cerrar formulario"
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => setShowNewEcoSidePanel(false)}
+        <SidePanel show={isPanelOpen("newEco")}>
+            <SidePanelHeader>
+                <SidePanelTitle className="text-xl">
+                    ¿Qué eco quieres hacer sonar?
+                    {locationResult?.display_name && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                            className="text-muted-foreground my-2 items-center gap-3 rounded-lg border p-3 text-sm"
+                        >
+                            <div className="group flex flex-row gap-3 text-sm">
+                                <div className="flex min-w-[24px] items-center justify-center">
+                                    <Map className="group-hover:animate-bounce" />
+                                </div>
+                                <span className="leading-snug break-words">
+                                    {locationResult?.display_name}
+                                </span>
+                            </div>
+                        </motion.div>
+                    )}
+                </SidePanelTitle>
+                <SidePanelDescription className="flex flex-col space-y-2">
+                    Cuéntanos lo que está pasando. No tengas miedo de ser claro y directo.
+                    Cuanto más detalles, mejor.
+                </SidePanelDescription>
+                <SidePanelAction>
+                    <Button
+                        aria-label="Cerrar formulario"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => closeAllPanels()}
+                    >
+                        <X />
+                    </Button>
+                </SidePanelAction>
+            </SidePanelHeader>
+            <SidePanelContent>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                        <FormField
+                            control={form.control}
+                            name="title"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Título del eco</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            placeholder="Un título breve y directo"
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormDescription>
+                                        Usa una frase clara para resumir tu eco. Ejemplo:
+                                        “Parque sin alumbrado público”.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="category"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Categoría del problema</FormLabel>
+                                    <Select
+                                        onValueChange={field.onChange}
+                                        defaultValue={field.value}
                                     >
-                                        <X />
-                                    </Button>
-                                </CardAction>
-                            </CardHeader>
-                            <CardContent className="space-y-7 text-sm">
-                                <Form {...form}>
-                                    <form
-                                        onSubmit={form.handleSubmit(onSubmit)}
-                                        className="space-y-8"
-                                    >
-                                        <FormField
-                                            control={form.control}
-                                            name="title"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Título del eco</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            placeholder="Un título breve y directo"
-                                                            {...field}
-                                                        />
-                                                    </FormControl>
-                                                    <FormDescription>
-                                                        Usa una frase clara para resumir
-                                                        tu eco. Ejemplo: “Parque sin
-                                                        alumbrado público”.
-                                                    </FormDescription>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="category"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>
-                                                        Categoría del problema
-                                                    </FormLabel>
-                                                    <Select
-                                                        onValueChange={field.onChange}
-                                                        defaultValue={field.value}
-                                                    >
-                                                        <FormControl>
-                                                            <SelectTrigger>
-                                                                <SelectValue placeholder="Selecciona una categoría" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent>
-                                                            {CATEGORY_OPTS.map(
-                                                                (item, idx) => (
-                                                                    <SelectItem
-                                                                        key={idx}
-                                                                        value={item.value}
-                                                                    >
-                                                                        {item.label}
-                                                                    </SelectItem>
-                                                                )
-                                                            )}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormDescription>
-                                                        Ayúdanos a clasificar el problema
-                                                        para entenderlo mejor.
-                                                    </FormDescription>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <AnimatePresence>
-                                            {!stayAnonymous && (
-                                                <motion.div
-                                                    key="contactFields"
-                                                    initial={{ opacity: 0, height: 0 }}
-                                                    animate={{
-                                                        opacity: 1,
-                                                        height: "auto",
-                                                    }}
-                                                    exit={{ opacity: 0, height: 0 }}
-                                                    transition={{
-                                                        duration: 0.3,
-                                                        ease: "easeInOut",
-                                                    }}
-                                                    className="space-y-8 overflow-hidden"
-                                                >
-                                                    <FormField
-                                                        control={form.control}
-                                                        name="email"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>
-                                                                    Correo electrónico
-                                                                    (opcional)
-                                                                </FormLabel>
-                                                                <FormControl>
-                                                                    <Input
-                                                                        placeholder="tucorreo@ejemplo.com"
-                                                                        {...field}
-                                                                    />
-                                                                </FormControl>
-                                                                <FormDescription>
-                                                                    Si podemos
-                                                                    contactarte, es más
-                                                                    fácil dar seguimiento.
-                                                                    Sin correo, podríamos
-                                                                    tener que descartar tu
-                                                                    eco.
-                                                                </FormDescription>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecciona una categoría" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {CATEGORY_OPTS.map((item, idx) => (
+                                                <SelectItem key={idx} value={item.value}>
+                                                    {item.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormDescription>
+                                        Ayúdanos a clasificar el problema para entenderlo
+                                        mejor.
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <AnimatePresence>
+                            {selectedCategory === "other" && (
+                                <motion.div
+                                    key="customCategory"
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                                    className="overflow-hidden"
+                                >
+                                    <FormField
+                                        control={form.control}
+                                        name="customCategory"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>
+                                                    Especifica la categoría
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="Ingresa la categoría"
+                                                        {...field}
                                                     />
-                                                    <FormField
-                                                        control={form.control}
-                                                        name="alias"
-                                                        render={({ field }) => (
-                                                            <FormItem>
-                                                                <FormLabel>
-                                                                    Alias (opcional)
-                                                                </FormLabel>
-                                                                <FormControl>
-                                                                    <Input
-                                                                        placeholder="Tu apodo o nombre público"
-                                                                        {...field}
-                                                                    />
-                                                                </FormControl>
-                                                                <FormDescription>
-                                                                    Esto nos permite
-                                                                    identificar tus
-                                                                    aportes sin revelar tu
-                                                                    identidad.
-                                                                </FormDescription>
-                                                                <FormMessage />
-                                                            </FormItem>
-                                                        )}
+                                                </FormControl>
+                                                <FormDescription>
+                                                    Describe brevemente la categoría del
+                                                    problema.
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                        <AnimatePresence>
+                            {!stayAnonymous && (
+                                <motion.div
+                                    key="contactFields"
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{
+                                        opacity: 1,
+                                        height: "auto",
+                                    }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{
+                                        duration: 0.3,
+                                        ease: "easeInOut",
+                                    }}
+                                    className="space-y-8 overflow-hidden"
+                                >
+                                    <FormField
+                                        control={form.control}
+                                        name="email"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>
+                                                    Correo electrónico (opcional)
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="tucorreo@ejemplo.com"
+                                                        {...field}
                                                     />
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-                                        <FormField
-                                            control={form.control}
-                                            name="description"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>
-                                                        ¿Qué está pasando?
-                                                    </FormLabel>
-                                                    <FormControl>
-                                                        <Textarea
-                                                            placeholder="Describe lo que sucede, cómo afecta a tu comunidad, y cualquier otro dato relevante"
-                                                            className="bg-foreground text-background h-40 resize-none"
-                                                            {...field}
-                                                        />
-                                                    </FormControl>
-                                                    <FormDescription>
-                                                        Sé lo más específico posible:
-                                                        ¿dónde ocurre?, ¿desde cuándo?,
-                                                        ¿quiénes están afectados?
-                                                    </FormDescription>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
+                                                </FormControl>
+                                                <FormDescription>
+                                                    Si podemos contactarte, es más fácil
+                                                    dar seguimiento. Sin correo, podríamos
+                                                    tener que descartar tu eco.
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="alias"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Alias (opcional)</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        placeholder="Tu apodo o nombre público"
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormDescription>
+                                                    Esto nos permite identificar tus
+                                                    aportes sin revelar tu identidad.
+                                                </FormDescription>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                        <FormField
+                            control={form.control}
+                            name="description"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>¿Qué está pasando?</FormLabel>
+                                    <FormControl>
+                                        <Textarea
+                                            placeholder="Describe lo que sucede, cómo afecta a tu comunidad, y cualquier otro dato relevante"
+                                            className="bg-foreground text-background h-40 resize-none"
+                                            {...field}
                                         />
+                                    </FormControl>
+                                    <FormDescription>
+                                        Sé lo más específico posible: ¿dónde ocurre?,
+                                        ¿desde cuándo?, ¿quiénes están afectados?
+                                    </FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
 
-                                        <FormField
-                                            control={form.control}
-                                            name="anonymous"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
-                                                    <div className="space-y-0.5">
-                                                        <FormLabel className="text-base">
-                                                            Permanecer anónimo
-                                                        </FormLabel>
-                                                        <FormDescription>
-                                                            Si activas esta opción, tu
-                                                            nombre no se mostrará
-                                                            públicamente en este eco.
-                                                        </FormDescription>
-                                                    </div>
-                                                    <FormControl>
-                                                        <Switch
-                                                            checked={field.value}
-                                                            onCheckedChange={
-                                                                field.onChange
-                                                            }
-                                                        />
-                                                    </FormControl>
-                                                </FormItem>
-                                            )}
+                        <FormField
+                            control={form.control}
+                            name="anonymous"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                                    <div className="space-y-0.5">
+                                        <FormLabel className="text-base">
+                                            Permanecer anónimo
+                                        </FormLabel>
+                                        <FormDescription>
+                                            Si activas esta opción, tu nombre no se
+                                            mostrará públicamente en este eco.
+                                        </FormDescription>
+                                    </div>
+                                    <FormControl>
+                                        <Switch
+                                            checked={field.value}
+                                            onCheckedChange={field.onChange}
                                         />
-                                        <div className="space-x-4">
-                                            <Button type="submit">
-                                                Haz sonar tu eco
-                                            </Button>
-                                            <Button
-                                                variant="destructive"
-                                                onClick={() =>
-                                                    setShowNewEcoSidePanel(false)
-                                                }
-                                            >
-                                                Descartar
-                                            </Button>
-                                        </div>
-                                    </form>
-                                </Form>
-                            </CardContent>
-                        </Card>
-                    </ScrollArea>
-                </motion.div>
-            )}
-        </AnimatePresence>
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        <div className="space-x-4">
+                            <Button type="submit">Haz sonar tu eco</Button>
+                            <Button
+                                variant="destructive"
+                                onClick={() => closeAllPanels()}
+                            >
+                                Descartar
+                            </Button>
+                        </div>
+                    </form>
+                </Form>
+            </SidePanelContent>
+        </SidePanel>
     );
 };

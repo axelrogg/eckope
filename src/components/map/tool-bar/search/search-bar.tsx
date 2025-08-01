@@ -19,7 +19,7 @@ const formSchema = z.object({
 });
 
 export const MapSearchBar = () => {
-    const { setSearchQuery, setLocation, setNewEcoPinLocation } = useMap();
+    const { setLocation, setPendingPin } = useMap();
 
     const [suggestions, setSuggestions] = React.useState<MapLocationSearchResponse[]>([]);
     const [loadingSuggestions, setLoadingSuggestions] = React.useState(false);
@@ -93,14 +93,12 @@ export const MapSearchBar = () => {
 
     async function onSubmit({ query }: z.infer<typeof formSchema>) {
         setShowSuggestions(false);
-        setSearchQuery(query);
         searchAndSetSuggestions(query);
     }
 
     const handleSelectSuggestion = (suggestion: MapLocationSearchResponse) => {
         form.setValue("query", suggestion.display_name);
         setShowSuggestions(false);
-        setSearchQuery(suggestion.display_name);
         if (
             suggestion.lat &&
             suggestion.lon &&
@@ -111,7 +109,7 @@ export const MapSearchBar = () => {
                 lat: Number(suggestion.lat),
                 lng: Number(suggestion.lon),
             });
-            setNewEcoPinLocation({
+            setPendingPin({
                 lat: Number(suggestion.lat),
                 lng: Number(suggestion.lon),
             });
