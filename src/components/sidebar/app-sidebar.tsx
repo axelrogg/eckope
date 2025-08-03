@@ -1,6 +1,6 @@
-"use client";
-
+import { auth, signOut } from "@/auth";
 import { BadgeInfo, Home } from "lucide-react";
+
 import {
     Sidebar,
     SidebarContent,
@@ -8,14 +8,10 @@ import {
     SidebarGroup,
     SidebarGroupContent,
     SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    useSidebar,
 } from "@/components/ui/sidebar";
-import { NavUser } from "./nav-user";
-import Link from "next/link";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { NavHeader } from "./nav-header";
+import { SidebarItem } from "@/components/sidebar/sidebar-item";
+import { NavHeader } from "@/components/sidebar/nav-header";
+import { NavUser } from "@/components/sidebar/nav-user";
 
 // Menu items.
 const menuItems = [
@@ -36,8 +32,14 @@ const menuItems = [
     //},
 ];
 
-export function AppSidebar() {
-    const { open } = useSidebar();
+export const AppSidebar = async () => {
+    const session = await auth();
+
+    const onSignOut = async () => {
+        "use server";
+        await signOut();
+    };
+
     return (
         <Sidebar side="left" collapsible="icon" variant="floating">
             <NavHeader />
@@ -46,29 +48,20 @@ export function AppSidebar() {
                     <SidebarGroupContent>
                         <SidebarMenu>
                             {menuItems.map((item) => (
-                                <Tooltip key={item.title}>
-                                    <TooltipTrigger asChild>
-                                        <SidebarMenuItem>
-                                            <SidebarMenuButton asChild>
-                                                <Link href={item.url}>
-                                                    <item.icon />
-                                                    <span>{item.title}</span>
-                                                </Link>
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
-                                    </TooltipTrigger>
-                                    <TooltipContent hidden={open} side="right">
-                                        <p>{item.title}</p>
-                                    </TooltipContent>
-                                </Tooltip>
+                                <SidebarItem
+                                    key={item.url}
+                                    icon={<item.icon />}
+                                    url={item.url}
+                                    title={item.title}
+                                />
                             ))}
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
             </SidebarContent>
             <SidebarFooter>
-                <NavUser user={{ name: "hello", email: "email", avatar: "" }} />
+                <NavUser user={session?.user} onSignOut={onSignOut} />
             </SidebarFooter>
         </Sidebar>
     );
-}
+};

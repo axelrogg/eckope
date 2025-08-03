@@ -9,6 +9,9 @@ import {
     timestamp,
     integer,
     foreignKey,
+    serial,
+    bigint,
+    primaryKey,
 } from "drizzle-orm/pg-core";
 
 export const peruDepartments = pgTable(
@@ -128,5 +131,51 @@ export const peruProvinces = pgTable(
             table.name
         ),
         unique("peru_provinces_code_key").on(table.code),
+    ]
+);
+
+export const accounts = pgTable("accounts", {
+    id: serial().primaryKey().notNull(),
+    userId: integer().notNull(),
+    type: varchar({ length: 255 }).notNull(),
+    provider: varchar({ length: 255 }).notNull(),
+    providerAccountId: varchar({ length: 255 }).notNull(),
+    refreshToken: text("refresh_token"),
+    accessToken: text("access_token"),
+    // You can use { mode: "bigint" } if numbers are exceeding js number limitations
+    expiresAt: bigint("expires_at", { mode: "number" }),
+    idToken: text("id_token"),
+    scope: text(),
+    sessionState: text("session_state"),
+    tokenType: text("token_type"),
+});
+
+export const sessions = pgTable("sessions", {
+    id: serial().primaryKey().notNull(),
+    userId: integer().notNull(),
+    expires: timestamp({ withTimezone: true, mode: "string" }).notNull(),
+    sessionToken: varchar({ length: 255 }).notNull(),
+});
+
+export const users = pgTable("users", {
+    id: serial().primaryKey().notNull(),
+    name: varchar({ length: 255 }),
+    email: varchar({ length: 255 }),
+    emailVerified: timestamp({ withTimezone: true, mode: "string" }),
+    image: text(),
+});
+
+export const verificationToken = pgTable(
+    "verification_token",
+    {
+        identifier: text().notNull(),
+        expires: timestamp({ withTimezone: true, mode: "string" }).notNull(),
+        token: text().notNull(),
+    },
+    (table) => [
+        primaryKey({
+            columns: [table.identifier, table.token],
+            name: "verification_token_pkey",
+        }),
     ]
 );
