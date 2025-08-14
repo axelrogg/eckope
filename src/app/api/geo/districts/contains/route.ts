@@ -1,42 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
-import { geoQueries } from "@/lib/database/queries/geo";
-import { httpErrorResponse } from "@/lib/http/error-response";
-import { toGeoJSON } from "@/lib/utils/to-geojson";
-
-const pointInDistrictQuerySchema = z.object({
-    latitude: z.coerce.number().min(-90).max(90),
-    longitude: z.coerce.number().min(-180).max(180),
-    format: z
-        .string()
-        .trim()
-        .toLowerCase()
-        .transform((val) => val || "json")
-        .refine((val) => !val || ["json", "geojson"].includes(val), {
-            message: "Format must be either 'json' or 'geojson'",
-        })
-        .optional(),
-});
+import db from "@/lib/database/db";
+import { peruDepartments, peruDistricts, peruProvinces } from "@root/drizzle/schema";
+import { districtContainsPointRequestQuerySchema } from "@/lib/schemas/geo/district-contains-point";
+import { httpErrorResponse } from "@/lib/http/response";
 
 export async function GET(req: NextRequest) {
     const { searchParams } = req.nextUrl;
 
     const rawQuery = {
-        latitude: searchParams.get("latitude"),
-        longitude: searchParams.get("longitude"),
-        format: searchParams.get("format") || undefined,
+        lat: Number(searchParams.get("lat")),
+        lng: Number(searchParams.get("lng")),
     };
 
-    console.log("[GeoAPI_Districts_Contains_GET] Incoming request with query:", rawQuery);
-
-    const parseResult = pointInDistrictQuerySchema.safeParse(rawQuery);
+    const parseResult = districtContainsPointRequestQuerySchema.safeParse(rawQuery);
 
     if (!parseResult.success) {
-        console.error(
-            "[GeoAPI_Districts_Contains_GET] Query validation failed:",
-            z.treeifyError(parseResult.error)
-        );
         return httpErrorResponse({
             type: "about:blank",
             title: "Invalid query parameters",
@@ -44,71 +25,67 @@ export async function GET(req: NextRequest) {
             detail: "One or more parameters are invalid.",
             errors: {
                 code: 123, // TODO: Implement API error codes
-                ...z.treeifyError(parseResult.error),
+                details: z.treeifyError(parseResult.error).properties,
             },
             instance: req.nextUrl.pathname,
         });
     }
 
-    const { latitude, longitude, format } = parseResult.data;
+    const { lat, lng } = parseResult.data;
 
-    console.log("[GeoAPI_Districts_Contains_GET] Fetching district containing point:", {
-        latitude,
-        longitude,
-    });
-
-    const district = await geoQueries
-        .districts()
-        .containsPoint({
-            lat: latitude,
-            lng: longitude,
-        })
-        .findOne();
-
-    if (!district) {
-        console.log(
-            "[GeoAPI_Districts_Contains_GET] No district found containing point."
-        );
-        return NextResponse.json(null, { status: 200 });
-    }
-
-    console.log("[GeoAPI_Districts_Contains_GET] District found:", {
-        id: district.id,
-        name: district.name,
-        ubigeo: district.ubigeo,
-    });
-
-    if (format === "geojson") {
-        console.log(
-            "[GeoAPI_Districts_Contains_GET] Returning response in GeoJSON format"
-        );
-        return NextResponse.json(
-            toGeoJSON({
-                properties: {
-                    ubigeo: district.ubigeo,
-                    name: district.name,
-                    department: {
-                        ...district.department,
-                    },
-                    province: {
-                        ...district.province,
-                    },
+    try {
+        const [district] = await db
+            .select({
+                id: peruDistricts.id,
+                name: peruDistricts.name,
+                ubigeo: peruDistricts.ubigeo,
+                department: {
+                    id: peruDepartments.id,
+                    code: peruDepartments.code,
+                    name: peruDepartments.name,
                 },
-                geometry: district.geometry,
+                province: {
+                    id: peruProvinces.id,
+                    code: peruProvinces.code,
+                    name: peruProvinces.name,
+                },
             })
-        );
+            .from(peruDistricts)
+            .where(
+                sql`ST_Intersects(
+                ${peruDistricts.geometry},
+                    ST_SetSRID(ST_Point(${lat}, ${lng}), 4326)
+            )`
+            )
+            .innerJoin(
+                peruDepartments,
+                eq(peruDistricts.departmentId, peruDepartments.id)
+            )
+            .innerJoin(peruProvinces, eq(peruDistricts.provinceId, peruProvinces.id))
+            .limit(1);
+
+        if (!district) {
+            return NextResponse.json(null);
+        }
+
+        return NextResponse.json({
+            id: district.id,
+            ubigeo: district.ubigeo,
+            name: district.name,
+            department: district.department,
+            province: district.province,
+        });
+    } catch (error) {
+        return httpErrorResponse({
+            status: 500,
+            title: "Internal Server Error",
+            detail: "An unexpected error occurred while fetching the department",
+            type: "about:blank",
+            instance: req.nextUrl.pathname,
+            errors: {
+                code: 123,
+                message: error instanceof Error ? error.message : String(error),
+            },
+        });
     }
-
-    console.log("[GeoAPI_Districts_Contains_GET] Returning response in JSON format");
-
-    return NextResponse.json({
-        ubigeo: district.ubigeo,
-        name: district.name,
-        department: {
-            ...district.department,
-        },
-        province: {
-            ...district.province,
-        },
-    });
 }

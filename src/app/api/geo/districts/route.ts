@@ -1,50 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { and, eq, ilike, SQL } from "drizzle-orm";
 import z from "zod";
 
-import { httpErrorResponse } from "@/lib/http/error-response";
-import { geoQueries } from "@/lib/database/queries/geo";
+import db from "@/lib/database/db";
+import { peruDepartments, peruDistricts, peruProvinces } from "@root/drizzle/schema";
 import { toGeoJSON } from "@/lib/utils/to-geojson";
-
-const querySchema = z.object({
-    ubigeo: z
-        .string()
-        .trim()
-        .refine((val) => val.length === 6 && !isNaN(Number(val)), {
-            message: "Each 'ubigeo' must be a 6-digit numeric string",
-        })
-        .optional(),
-    name: z.string().trim().optional(),
-    departmentCode: z
-        .string()
-        .trim()
-        .refine((val) => val.length === 2 && !isNaN(Number(val)), {
-            message: "Each 'code' must be a 2-digit numeric string",
-        })
-        .optional(),
-    departmentName: z.string().trim().optional(),
-    provinceCode: z
-        .string()
-        .trim()
-        .refine((val) => val.length === 4 && !isNaN(Number(val)), {
-            message: "Each 'code' must be a 4-digit numeric string",
-        })
-        .optional(),
-    provinceName: z.string().trim().optional(),
-    format: z
-        .string()
-        .trim()
-        .toLowerCase()
-        .transform((val) => val || "json")
-        .refine((val) => ["json", "geojson"].includes(val), {
-            message: "Format must be either 'json' or 'geojson'",
-        })
-        .optional(),
-});
+import { districtRequestQuerySchema } from "@/lib/schemas/geo/district";
+import { projectSQLGeometry } from "@/lib/utils/project-geometry";
+import { httpErrorResponse } from "@/lib/http/response";
 
 export async function GET(req: NextRequest) {
     const { searchParams } = req.nextUrl;
 
-    const rawQuery = {
+    const rawSearchParams = {
         ubigeo: searchParams.get("ubigeo") || undefined,
         name: searchParams.get("name") || undefined,
         departmentCode: searchParams.get("department_code") || undefined,
@@ -54,15 +22,9 @@ export async function GET(req: NextRequest) {
         format: searchParams.get("format") || undefined,
     };
 
-    console.log("[GeoAPI_Districts_GET] Incoming request with query:", rawQuery);
-
-    const parseResult = querySchema.safeParse(rawQuery);
+    const parseResult = districtRequestQuerySchema.safeParse(rawSearchParams);
 
     if (!parseResult.success) {
-        console.error(
-            "[GeoAPI_Districts_GET] Query validation failed:",
-            z.treeifyError(parseResult.error)
-        );
         return httpErrorResponse({
             type: "about:blank",
             title: "Invalid query parameters",
@@ -85,80 +47,96 @@ export async function GET(req: NextRequest) {
         provinceName,
         format,
     } = parseResult.data;
+    const filters: SQL[] = [];
 
-    console.log("[GeoAPI_Districts_GET] Fetching districts with filters:", {
-        ubigeo,
-        name,
-        departmentCode,
-        departmentName,
-        provinceCode,
-        provinceName,
-    });
-
-    const districtsFound = await geoQueries
-        .districts()
-        .where({
-            params: {
-                ubigeo,
-                name,
-                departmentCode,
-                departmentName,
-                provinceCode,
-                provinceName,
-            },
-        })
-        .findMany();
-
-    console.log(`[GeoAPI_Districts_GET] ${districtsFound.length} districts found`);
-
-    if (!districtsFound || districtsFound.length === 0) {
-        console.log("[GeoAPI_Districts_GET] No matching districts found.");
-        return NextResponse.json([], { status: 200 });
+    if (ubigeo) {
+        filters.push(eq(peruDistricts.ubigeo, ubigeo));
     }
 
-    if (format === "geojson") {
-        console.log("[GeoAPI_Districts_GET] Returning response in GeoJSON format");
-        return NextResponse.json(
-            toGeoJSON(
-                districtsFound.map((dist) => ({
-                    properties: {
-                        id: dist.id,
-                        ubigeo: dist.ubigeo,
-                        name: dist.name,
-                        length_deg: dist.lengthDeg,
-                        area_deg2: dist.areaDeg2,
-                        length_km: dist.lengthKm,
-                        area_km2: dist.areaKm2,
-                        department: {
-                            ...dist.department,
-                        },
-                        province: {
-                            ...dist.province,
-                        },
-                    },
-                    geometry: dist.geometry,
-                }))
+    if (name) {
+        filters.push(ilike(peruDistricts.name, name));
+    }
+
+    if (departmentCode) {
+        filters.push(eq(peruDepartments.code, departmentCode));
+    }
+
+    if (departmentName) {
+        filters.push(ilike(peruDepartments.name, departmentName));
+    }
+
+    if (provinceCode) {
+        filters.push(eq(peruProvinces.code, provinceCode));
+    }
+
+    if (provinceName) {
+        filters.push(ilike(peruProvinces.name, provinceName));
+    }
+
+    const whereClause = filters.length > 0 ? and(...filters) : undefined;
+
+    try {
+        const districts = await db
+            .select({
+                id: peruDistricts.id,
+                name: peruDistricts.name,
+                ubigeo: peruDistricts.ubigeo,
+                department: {
+                    id: peruDepartments.id,
+                    code: peruDepartments.code,
+                    name: peruDepartments.name,
+                },
+                province: {
+                    id: peruProvinces.id,
+                    code: peruProvinces.code,
+                    name: peruProvinces.name,
+                },
+                lengthDeg: peruDistricts.lengthDeg,
+                areaDeg2: peruDistricts.areaDeg2,
+                lengthKm: peruDistricts.lengthKm,
+                areaKm2: peruDistricts.areaKm2,
+                geometry: projectSQLGeometry(peruDistricts.geometry),
+            })
+            .from(peruDistricts)
+            .where(whereClause)
+            .innerJoin(
+                peruDepartments,
+                eq(peruDistricts.departmentId, peruDepartments.id)
             )
-        );
+            .innerJoin(peruProvinces, eq(peruDistricts.provinceId, peruProvinces.id));
+
+        if (format === "geojson") {
+            return NextResponse.json(
+                toGeoJSON(
+                    districts.map((dist) => ({
+                        properties: {
+                            id: dist.id,
+                            ubigeo: dist.ubigeo,
+                            name: dist.name,
+                            department: dist.department,
+                            province: dist.province,
+                            lengthDeg: dist.lengthDeg,
+                            areaDeg2: dist.areaDeg2,
+                            lengthKm: dist.lengthKm,
+                            areaKm2: dist.areaKm2,
+                        },
+                        geometry: dist.geometry,
+                    }))
+                )
+            );
+        }
+        return NextResponse.json(districts);
+    } catch (error) {
+        return httpErrorResponse({
+            status: 500,
+            title: "Internal Server Error",
+            detail: "An unexpected error occurred while fetching the department",
+            type: "about:blank",
+            instance: req.nextUrl.pathname,
+            errors: {
+                code: 123,
+                message: error instanceof Error ? error.message : String(error),
+            },
+        });
     }
-
-    console.log("[GeoAPI_Districts_GET] Returning response in JSON format");
-
-    return NextResponse.json(
-        districtsFound.map((dist) => ({
-            id: dist.id,
-            ubigeo: dist.ubigeo,
-            name: dist.name,
-            length_deg: dist.lengthDeg,
-            area_deg2: dist.areaDeg2,
-            length_km: dist.lengthKm,
-            area_km2: dist.areaKm2,
-            department: {
-                ...dist.department,
-            },
-            province: {
-                ...dist.province,
-            },
-        }))
-    );
 }
