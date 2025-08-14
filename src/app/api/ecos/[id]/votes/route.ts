@@ -1,0 +1,290 @@
+import { NextAuthRequest } from "next-auth";
+import { and, eq } from "drizzle-orm";
+import { auth } from "@/auth";
+import z from "zod";
+
+import db from "@/lib/database/db";
+import { ecos as ecosTable, ecoVotes } from "@root/drizzle/schema";
+import { httpErrorResponse, httpSuccessResponse } from "@/lib/http/response";
+import { ecosVoteUpdateSchema } from "@/lib/schemas/ecos-vote-update";
+import { idRequestSearchParamSchema } from "@/lib/schemas/geo/constants";
+import { handleEcoVote } from "@/lib/utils/api/handle-ecos-vote";
+import { parseApiRequestBody } from "@/lib/utils/api/parse-api-request-body";
+import { ApiAction } from "@/types/api/http-response";
+
+const INSTANCE_PATH = "/api/ecos/{id:uuid}/votes";
+
+export const GET = auth(async function GET(
+    req: NextAuthRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const searchParams = await params;
+
+    const parsedSearchParamsResult = idRequestSearchParamSchema.safeParse(searchParams);
+
+    if (!parsedSearchParamsResult.success) {
+        return httpErrorResponse({
+            type: "about:blank",
+            title: "Invalid query parameters",
+            status: 400,
+            detail: "One or more parameters are invalid.",
+            errors: {
+                code: 123, // TODO: Implement API error codes
+                ...z.treeifyError(parsedSearchParamsResult.error),
+            },
+            instance: INSTANCE_PATH,
+        });
+    }
+
+    const ecoId = parsedSearchParamsResult.data.id;
+    const authed = req.auth;
+
+    if (!authed) {
+        try {
+            const [votes] = await db
+                .select({
+                    id: ecosTable.id,
+                    upvotes: ecosTable.upvotes,
+                    downvotes: ecosTable.downvotes,
+                })
+                .from(ecosTable)
+                .where(eq(ecosTable.id, ecoId));
+            if (!votes) {
+                return httpErrorResponse({
+                    type: "about:blank",
+                    title: "Not Found",
+                    status: 404,
+                    detail: `Eco with id "${ecoId}" was not found.`,
+                    errors: {
+                        code: 123,
+                        details: `Eco with id "${ecoId}" was not found.`,
+                    },
+                    instance: INSTANCE_PATH,
+                });
+            }
+            return httpSuccessResponse({
+                action: "fetched",
+                instance: INSTANCE_PATH,
+                data: votes,
+            });
+        } catch (error) {
+            return httpErrorResponse({
+                type: "about:blank",
+                title: "Internal Server Error",
+                status: 500,
+                detail: "An unexpected error occurred during the update.",
+                errors: {
+                    code: 500,
+                    details: error instanceof Error ? error.message : String(error),
+                },
+                instance: INSTANCE_PATH,
+            });
+        }
+    }
+
+    // User must be authenticated at this point
+
+    try {
+        const result = await db.transaction(async (tx) => {
+            const [existingVote] = await tx
+                .select()
+                .from(ecoVotes)
+                .where(
+                    and(eq(ecoVotes.ecoId, ecoId), eq(ecoVotes.userId, authed.user.id))
+                );
+            const [voteCount] = await tx
+                .select({
+                    id: ecosTable.id,
+                    upvotes: ecosTable.upvotes,
+                    downvotes: ecosTable.downvotes,
+                })
+                .from(ecosTable)
+                .where(
+                    and(eq(ecosTable.id, ecoId), eq(ecosTable.userId, authed.user.id))
+                );
+
+            return {
+                vote: {
+                    status: existingVote ? true : false,
+                    voteType: existingVote ? existingVote.voteType : null,
+                },
+                eco: {
+                    id: voteCount.id,
+                    upvotes: voteCount.upvotes,
+                    downvotes: voteCount.downvotes,
+                },
+            };
+        });
+        if (!result.eco) {
+            return httpErrorResponse({
+                type: "about:blank",
+                title: "Not Found",
+                status: 404,
+                detail: `Eco with id "${ecoId}" was not found.`,
+                errors: {
+                    code: 123,
+                    details: `Eco with id "${ecoId}" was not found.`,
+                },
+                instance: INSTANCE_PATH,
+            });
+        }
+        return httpSuccessResponse({
+            action: "fetched",
+            instance: INSTANCE_PATH,
+            data: result,
+        });
+    } catch (error) {
+        return httpErrorResponse({
+            type: "about:blank",
+            title: "Internal Server Error",
+            status: 500,
+            detail: "An unexpected error occurred during the update.",
+            errors: {
+                code: 500,
+                details: error instanceof Error ? error.message : String(error),
+            },
+            instance: INSTANCE_PATH,
+        });
+    }
+});
+
+export const POST = auth(async function POST(
+    req: NextAuthRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    const searchParams = await params;
+    const parsedSearchParamsResult = idRequestSearchParamSchema.safeParse(searchParams);
+
+    if (!parsedSearchParamsResult.success) {
+        return httpErrorResponse({
+            type: "about:blank",
+            title: "Invalid query parameters",
+            status: 400,
+            detail: "One or more parameters are invalid.",
+            errors: {
+                code: 123, // TODO: Implement API error codes
+                ...z.treeifyError(parsedSearchParamsResult.error),
+            },
+            instance: INSTANCE_PATH,
+        });
+    }
+
+    if (!req.auth) {
+        return httpErrorResponse({
+            type: "about:blank",
+            title: "Unauthorized",
+            status: 401,
+            detail: "Authentication required to access this resource.",
+            errors: {
+                code: 123, // Custom error code for "missing authentication"
+            },
+            instance: INSTANCE_PATH,
+        });
+    }
+
+    const { data: reqBodyData, error: reqBodyError } = await parseApiRequestBody(req);
+
+    if (reqBodyError) {
+        return httpErrorResponse({
+            type: "about:blank",
+            title: "Invalid request body",
+            status: 400,
+            detail: "The request body must be valid JSON.",
+            errors: {
+                code: 123, // Specific code for JSON parse errors
+                details: reqBodyError,
+            },
+            instance: INSTANCE_PATH,
+        });
+    }
+
+    const parsedBodyResult = ecosVoteUpdateSchema.safeParse(reqBodyData);
+    if (!parsedBodyResult.success) {
+        return httpErrorResponse({
+            type: "about:blank",
+            title: "Invalid request body",
+            status: 400,
+            detail: "One or more parameters are invalid.",
+            errors: {
+                code: 123, // TODO: Implement API error codes
+                ...z.treeifyError(parsedBodyResult.error),
+            },
+            instance: INSTANCE_PATH,
+        });
+    }
+
+    const ecoId = parsedSearchParamsResult.data.id;
+    const userId = req.auth.user.id;
+    const { upvote } = parsedBodyResult.data;
+
+    if (upvote) {
+        try {
+            const result = await db.transaction(async (tx) => {
+                return await handleEcoVote({
+                    tx,
+                    id: ecoId,
+                    userId,
+                    voteType: "up",
+                });
+            });
+            return httpSuccessResponse({
+                action: result.action as ApiAction,
+                status: (result.action as ApiAction) === "created" ? 201 : 200,
+                instance: INSTANCE_PATH,
+                data: {
+                    ...result.data,
+                    ...result.vote,
+                },
+            });
+        } catch (error) {
+            console.error(error);
+            return httpErrorResponse({
+                type: "about:blank",
+                title: "Internal Server Error",
+                status: 500,
+                detail: "An unexpected error occurred during the update.",
+                errors: {
+                    code: 500,
+                    details: error instanceof Error ? error.message : String(error),
+                },
+                instance: INSTANCE_PATH,
+            });
+        }
+    } else {
+        // Because of `ecosVoteApiPatchSchema` we are assured that either `upvote` or `downvote` is `true`.
+        // So if `upvote` is not true, it must be that `downvote` is `true`.
+        try {
+            const result = await db.transaction(async (tx) => {
+                return await handleEcoVote({
+                    tx,
+                    id: ecoId,
+                    userId,
+                    voteType: "down",
+                });
+            });
+
+            return httpSuccessResponse({
+                action: result.action as ApiAction,
+                status: (result.action as ApiAction) === "created" ? 201 : 200,
+                instance: INSTANCE_PATH,
+                data: {
+                    ...result.data,
+                    ...result.vote,
+                },
+            });
+        } catch (error) {
+            console.error(error);
+            return httpErrorResponse({
+                type: "about:blank",
+                title: "Internal Server Error",
+                status: 500,
+                detail: "An unexpected error occurred during the update.",
+                errors: {
+                    code: 500,
+                    details: error instanceof Error ? error.message : String(error),
+                },
+                instance: INSTANCE_PATH,
+            });
+        }
+    }
+});
