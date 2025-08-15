@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import z from "zod";
 
 import db from "@/lib/database/db";
-import { ecos as ecosTable, usersInNextAuth } from "@root/drizzle/schema";
+import { ecoReplies, ecos as ecosTable, usersInNextAuth } from "@root/drizzle/schema";
 import { httpErrorResponse, httpSuccessResponse } from "@/lib/http/response";
 import { idRequestSearchParamSchema } from "@/lib/schemas/geo/constants";
 
@@ -42,6 +42,9 @@ export async function GET(
                 edited: ecosTable.edited,
                 upvotes: ecosTable.upvotes,
                 downvotes: ecosTable.downvotes,
+                createdAt: ecosTable.createdAt,
+                updatedAt: ecosTable.updatedAt,
+                replyCount: db.$count(ecoReplies, eq(ecoReplies.ecoId, ecosTable.id)),
                 author: {
                     id: usersInNextAuth.id,
                     email: usersInNextAuth.email,
@@ -51,7 +54,8 @@ export async function GET(
             })
             .from(ecosTable)
             .where(eq(ecosTable.ecoPinId, ecoPinId))
-            .innerJoin(usersInNextAuth, eq(ecosTable.userId, usersInNextAuth.id));
+            .innerJoin(usersInNextAuth, eq(ecosTable.userId, usersInNextAuth.id))
+            .orderBy(desc(ecosTable.updatedAt));
 
         return httpSuccessResponse({
             instance: INSTANCE_PATH,

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 
 const clampClasses: Record<number, string> = {
     1: "line-clamp-1",

@@ -1,5 +1,5 @@
-import { NextAuthRequest } from "next-auth";
 import { NextRequest } from "next/server";
+import { NextAuthRequest } from "next-auth";
 
 export async function parseApiRequestBody(req: NextRequest | NextAuthRequest) {
     try {

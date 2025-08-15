@@ -10,7 +10,7 @@ import { ecosVoteUpdateSchema } from "@/lib/schemas/ecos-vote-update";
 import { handleEcoPinVote } from "@/lib/utils/api/handle-ecos-vote";
 import { parseApiRequestBody } from "@/lib/utils/api/parse-api-request-body";
 import { idRequestSearchParamSchema } from "@/lib/schemas/geo/constants";
-import { ApiAction } from "@/types/api/http-response";
+import { ApiAction } from "@/types/http-response";
 
 const INSTANCE_PATH = "/api/eco-pins/{id:uuid}/votes";
 
@@ -43,7 +43,7 @@ export const GET = auth(async function GET(
         try {
             const [votes] = await db
                 .select({
-                    id: ecoPins.id,
+                    ecoPinId: ecoPins.id,
                     upvotes: ecoPins.upvotes,
                     downvotes: ecoPins.downvotes,
                 })
@@ -108,15 +108,15 @@ export const GET = auth(async function GET(
                     status: existingVote ? true : false,
                     voteType: existingVote ? existingVote.voteType : null,
                 },
-                ecoPin: {
-                    id: voteCount.id,
+                count: {
+                    ecoPinId: voteCount.id,
                     upvotes: voteCount.upvotes,
                     downvotes: voteCount.downvotes,
                 },
             };
         });
 
-        if (!result.ecoPin) {
+        if (!result.count) {
             return httpErrorResponse({
                 type: "about:blank",
                 title: "Not Found",
@@ -235,8 +235,8 @@ export const POST = auth(async function POST(
                 status: (result.action as ApiAction) === "created" ? 201 : 200,
                 instance: INSTANCE_PATH,
                 data: {
-                    ...result.data,
-                    ...result.vote,
+                    vote: result.vote,
+                    count: result.count,
                 },
             });
         } catch (error) {
@@ -270,8 +270,8 @@ export const POST = auth(async function POST(
                 status: (result.action as ApiAction) === "created" ? 201 : 200,
                 instance: INSTANCE_PATH,
                 data: {
-                    ...result.data,
-                    ...result.vote,
+                    vote: result.vote,
+                    count: result.count,
                 },
             });
         } catch (error) {

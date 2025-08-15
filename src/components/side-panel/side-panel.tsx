@@ -22,7 +22,7 @@ interface SidePanelProps {
 /**
  * SidePanel
  *
- * A composable UI container rendered as a side panel overlay.
+ * A UI container rendered as a side panel overlay.
  * Designed for tasks like form entry, detail views, or workflows requiring user focus away from the map.
  *
  * This component uses `motion.div` (via Framer Motion) to animate entry/exit from the right edge of the screen.
@@ -68,7 +68,7 @@ const SidePanel = ({ show, children }: SidePanelProps) => {
             {show && (
                 <motion.div
                     data-slot="side-panel"
-                    className="absolute top-0 right-0 z-50 h-svh bg-transparent p-2 lg:w-120"
+                    className="absolute top-0 right-0 z-50 h-svh min-h-svh bg-transparent p-2 lg:w-120"
                     role="dialog"
                     aria-modal="true"
                     initial={{ x: "100%", opacity: 0 }}
@@ -77,8 +77,8 @@ const SidePanel = ({ show, children }: SidePanelProps) => {
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     onAnimationComplete={handleAnimationComplete}
                 >
-                    <ScrollArea className="h-full rounded-xl">
-                        <Card className="h-full">{children}</Card>
+                    <ScrollArea className="h-[calc(100svh-1rem)] rounded-xl">
+                        <Card className="min-h-[calc(100svh-1rem)]">{children}</Card>
                     </ScrollArea>
                 </motion.div>
             )}

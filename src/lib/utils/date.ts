@@ -84,4 +84,10 @@ export const dateUtils = {
 
         return t.justNow;
     },
+
+    sortByUpdatedAtDesc<T extends { updatedAt: string | Date }>(arr: T[]) {
+        return arr.sort(
+            (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
+    },
 };

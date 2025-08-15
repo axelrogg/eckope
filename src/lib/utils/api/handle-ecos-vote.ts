@@ -30,13 +30,14 @@ export async function handleEcoPinVote({
     if (existingVote) {
         if (existingVote.voteType === voteType) {
             /* Toggle off: delete existing vote */
-            const [deleted] = await tx
-                .delete(ecoPinVotes)
-                .where(whereCondition)
-                .returning();
+            await tx.delete(ecoPinVotes).where(whereCondition);
 
             const [votes] = await tx
-                .select({ upvotes: ecoPins.upvotes, downvotes: ecoPins.downvotes })
+                .select({
+                    ecoPinId: ecoPins.id,
+                    upvotes: ecoPins.upvotes,
+                    downvotes: ecoPins.downvotes,
+                })
                 .from(ecoPins)
                 .where(eq(ecoPins.id, id))
                 .limit(1);
@@ -44,18 +45,18 @@ export async function handleEcoPinVote({
             return {
                 action: "deleted",
                 vote: { status: false, voteType: null },
-                data: { ...deleted, ...votes },
+                count: votes,
             };
         } else {
             /* Different vote type: update voteType */
-            const [updated] = await tx
-                .update(ecoPinVotes)
-                .set({ voteType })
-                .where(whereCondition)
-                .returning();
+            await tx.update(ecoPinVotes).set({ voteType }).where(whereCondition);
 
             const [votes] = await tx
-                .select({ upvotes: ecoPins.upvotes, downvotes: ecoPins.downvotes })
+                .select({
+                    ecoPinId: ecoPins.id,
+                    upvotes: ecoPins.upvotes,
+                    downvotes: ecoPins.downvotes,
+                })
                 .from(ecoPins)
                 .where(eq(ecoPins.id, id))
                 .limit(1);
@@ -63,23 +64,26 @@ export async function handleEcoPinVote({
             return {
                 action: "updated",
                 vote: { status: true, voteType },
-                data: { ...updated, ...votes },
+                count: votes,
             };
         }
     }
 
     /* No existing vote; create a new one */
-    const [inserted] = await tx
+    await tx
         .insert(ecoPinVotes)
         .values({ ecoPinId: id, userId, voteType })
         .onConflictDoUpdate({
             target: [ecoPinVotes.ecoPinId, ecoPinVotes.userId],
             set: { voteType },
-        })
-        .returning();
+        });
 
     const [votes] = await tx
-        .select({ upvotes: ecoPins.upvotes, downvotes: ecoPins.downvotes })
+        .select({
+            ecoPinId: ecoPins.id,
+            upvotes: ecoPins.upvotes,
+            downvotes: ecoPins.downvotes,
+        })
         .from(ecoPins)
         .where(eq(ecoPins.id, id))
         .limit(1);
@@ -87,7 +91,7 @@ export async function handleEcoPinVote({
     return {
         action: "created",
         vote: { status: true, voteType },
-        data: { ...inserted, ...votes },
+        count: votes,
     };
 }
 
@@ -103,10 +107,14 @@ export async function handleEcoVote({ tx, id, userId, voteType }: HandleEcosVote
     if (existingVote) {
         if (existingVote.voteType === voteType) {
             /* Toggle off: delete existing vote */
-            const [deleted] = await tx.delete(ecoVotes).where(whereCondition).returning();
+            await tx.delete(ecoVotes).where(whereCondition);
 
             const [votes] = await tx
-                .select({ upvotes: ecos.upvotes, downvotes: ecos.downvotes })
+                .select({
+                    ecoId: ecos.id,
+                    upvotes: ecos.upvotes,
+                    downvotes: ecos.downvotes,
+                })
                 .from(ecos)
                 .where(eq(ecos.id, id))
                 .limit(1);
@@ -114,18 +122,18 @@ export async function handleEcoVote({ tx, id, userId, voteType }: HandleEcosVote
             return {
                 action: "deleted",
                 vote: { status: false, voteType: null },
-                data: { ...deleted, ...votes },
+                count: votes,
             };
         } else {
             /* Different vote type: update voteType */
-            const [updated] = await tx
-                .update(ecoVotes)
-                .set({ voteType })
-                .where(whereCondition)
-                .returning();
+            await tx.update(ecoVotes).set({ voteType }).where(whereCondition);
 
             const [votes] = await tx
-                .select({ upvotes: ecos.upvotes, downvotes: ecos.downvotes })
+                .select({
+                    ecoId: ecos.id,
+                    upvotes: ecos.upvotes,
+                    downvotes: ecos.downvotes,
+                })
                 .from(ecos)
                 .where(eq(ecos.id, id))
                 .limit(1);
@@ -133,23 +141,22 @@ export async function handleEcoVote({ tx, id, userId, voteType }: HandleEcosVote
             return {
                 action: "updated",
                 vote: { status: true, voteType },
-                data: { ...updated, ...votes },
+                count: votes,
             };
         }
     }
 
     /* No existing vote; create a new one */
-    const [inserted] = await tx
+    await tx
         .insert(ecoVotes)
         .values({ ecoId: id, userId, voteType })
         .onConflictDoUpdate({
             target: [ecoVotes.ecoId, ecoVotes.userId],
             set: { voteType },
-        })
-        .returning();
+        });
 
     const [votes] = await tx
-        .select({ upvotes: ecos.upvotes, downvotes: ecos.downvotes })
+        .select({ ecoId: ecos.id, upvotes: ecos.upvotes, downvotes: ecos.downvotes })
         .from(ecos)
         .where(eq(ecos.id, id))
         .limit(1);
@@ -157,7 +164,7 @@ export async function handleEcoVote({ tx, id, userId, voteType }: HandleEcosVote
     return {
         action: "created",
         vote: { status: true, voteType },
-        data: { ...inserted, ...votes },
+        count: votes,
     };
 }
 

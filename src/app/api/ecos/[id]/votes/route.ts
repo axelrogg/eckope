@@ -10,7 +10,7 @@ import { ecosVoteUpdateSchema } from "@/lib/schemas/ecos-vote-update";
 import { idRequestSearchParamSchema } from "@/lib/schemas/geo/constants";
 import { handleEcoVote } from "@/lib/utils/api/handle-ecos-vote";
 import { parseApiRequestBody } from "@/lib/utils/api/parse-api-request-body";
-import { ApiAction } from "@/types/api/http-response";
+import { ApiAction } from "@/types/http-response";
 
 const INSTANCE_PATH = "/api/ecos/{id:uuid}/votes";
 
@@ -43,7 +43,7 @@ export const GET = auth(async function GET(
         try {
             const [votes] = await db
                 .select({
-                    id: ecosTable.id,
+                    ecoId: ecosTable.id,
                     upvotes: ecosTable.upvotes,
                     downvotes: ecosTable.downvotes,
                 })
@@ -108,14 +108,14 @@ export const GET = auth(async function GET(
                     status: existingVote ? true : false,
                     voteType: existingVote ? existingVote.voteType : null,
                 },
-                eco: {
+                count: {
                     id: voteCount.id,
                     upvotes: voteCount.upvotes,
                     downvotes: voteCount.downvotes,
                 },
             };
         });
-        if (!result.eco) {
+        if (!result.count) {
             return httpErrorResponse({
                 type: "about:blank",
                 title: "Not Found",
@@ -134,6 +134,7 @@ export const GET = auth(async function GET(
             data: result,
         });
     } catch (error) {
+        console.error(error);
         return httpErrorResponse({
             type: "about:blank",
             title: "Internal Server Error",
@@ -232,8 +233,8 @@ export const POST = auth(async function POST(
                 status: (result.action as ApiAction) === "created" ? 201 : 200,
                 instance: INSTANCE_PATH,
                 data: {
-                    ...result.data,
-                    ...result.vote,
+                    vote: result.vote,
+                    count: result.count,
                 },
             });
         } catch (error) {
@@ -268,8 +269,8 @@ export const POST = auth(async function POST(
                 status: (result.action as ApiAction) === "created" ? 201 : 200,
                 instance: INSTANCE_PATH,
                 data: {
-                    ...result.data,
-                    ...result.vote,
+                    vote: result.vote,
+                    count: result.count,
                 },
             });
         } catch (error) {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import {
     HttpErrorResponseOptions,
     HttpSuccessResponseOptions,
-} from "@/types/api/http-response";
+} from "@/types/http-response";
 
 export function httpErrorResponse(
     {
