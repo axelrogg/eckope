@@ -5,43 +5,70 @@ import { Eco as EcoType } from "@/types/eco";
 import { EcoContent } from "./eco-content";
 import { Badge } from "@/components/ui/badge";
 import { EcoAuthor } from "@/components/eco/eco-pin-panel/eco-author";
-import { EcoControls } from "@/components/eco/eco-pin-panel/eco-controls";
+import { EcoControls } from "./controls/eco-controls";
+import { User } from "@/types/auth";
+import { Button } from "@/components/ui/button";
+import { ChevronDown, ChevronUp, LoaderCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchEcoRepliesByEcoId } from "@/lib/api/ecos";
+import { EcoPinPanelEcoReply } from "./eco-reply";
+import { cn } from "@/lib/utils/cn";
 
-type EcoProps = Omit<EcoType, "ecoPinId" | "editedAt" | "upvotes" | "downvotes">;
+type EcoProps = Omit<EcoType, "ecoPinId" | "editedAt" | "upvotes" | "downvotes"> & {
+    user: User;
+};
 
-export const Eco = ({ id, author, content, createdAt, edited, updatedAt }: EcoProps) => {
+export const EcoPinPanelEco = ({
+    id,
+    user,
+    author,
+    content,
+    createdAt,
+    edited,
+    updatedAt,
+    replyCount,
+}: EcoProps) => {
     const repliesContainerRef = React.useRef<HTMLDivElement>(null);
-    //const [railHeight, setRailHeight] = React.useState<number>(0);
+    const [railHeight, setRailHeight] = React.useState<number>(0);
+    const [replyFormOpen, setReplyFormOpen] = React.useState(false);
+    const [showReplies, setShowReplies] = React.useState(false);
 
-    //React.useEffect(() => {
-    //    if (!repliesContainerRef.current || replies.length === 0) return;
+    const { data: replies = [], isLoading: repliesLoading } = useQuery({
+        queryKey: ["eco-reply-list", id],
+        queryFn: () => fetchEcoRepliesByEcoId(id),
+        enabled: showReplies === true,
+    });
 
-    //    const container = repliesContainerRef.current;
+    React.useEffect(() => {
+        if (!repliesContainerRef.current || replies.length === 0) return;
 
-    //    const updateRailHeight = () => {
-    //        const lastReply = container.children[container.children.length - 1];
-    //        if (!lastReply) return;
+        const container = repliesContainerRef.current;
 
-    //        requestAnimationFrame(() => {
-    //            const containerTop = container.getBoundingClientRect().top;
-    //            const lastReplyBottom = lastReply.getBoundingClientRect().bottom;
-    //            const newHeight = lastReplyBottom - containerTop - 20;
-    //            setRailHeight(newHeight);
-    //        });
-    //    };
+        const updateRailHeight = () => {
+            const lastReply = container.children[container.children.length - 1];
+            if (!lastReply) return;
 
-    //    updateRailHeight(); // Initial run
+            requestAnimationFrame(() => {
+                const containerTop = container.getBoundingClientRect().top;
+                const lastReplyBottom = lastReply.getBoundingClientRect().bottom;
+                const increment = replyFormOpen ? 20 : 0; // This is the increment that we have to add in case the reply form is shown on the screen
+                const newHeight = lastReplyBottom - containerTop - 20 + increment;
+                setRailHeight(newHeight);
+            });
+        };
 
-    //    const observer = new ResizeObserver(updateRailHeight);
+        updateRailHeight(); // Initial run
 
-    //    observer.observe(container);
-    //    const lastChild = container.children[container.children.length - 1];
-    //    if (lastChild) observer.observe(lastChild);
+        const observer = new ResizeObserver(updateRailHeight);
 
-    //    return () => {
-    //        observer.disconnect();
-    //    };
-    //}, [replies]);
+        observer.observe(container);
+        const lastChild = container.children[container.children.length - 1];
+        if (lastChild) observer.observe(lastChild);
+
+        return () => {
+            observer.disconnect();
+        };
+    }, [replies, replyFormOpen]);
 
     return (
         <div className="group relative flex flex-col space-y-2">
@@ -51,25 +78,46 @@ export const Eco = ({ id, author, content, createdAt, edited, updatedAt }: EcoPr
             />
             {edited && <Badge className="ml-10">Editado</Badge>}
 
-            {/*
-            {replies && replies.length > 0 && (
+            {showReplies && replies.length > 0 && (
                 <div
-                    className="group bg-muted group-hover:bg-accent absolute top-12 left-4 w-px transition-colors duration-300 ease-out"
+                    className="group bg-muted group-hover:bg-accent absolute top-11 left-5 w-px transition-colors duration-300 ease-out"
                     style={{ height: `${railHeight}px` }}
                 />
             )}
-            */}
-
             <div className="ml-10 space-y-2">
                 <EcoContent content={content} />
-                <EcoControls id={id} />
+                <EcoControls id={id} user={user} onReplyFormToggle={setReplyFormOpen} />
+
+                {replyCount > 0 && (
+                    <Button
+                        variant="ghost"
+                        onClick={() => setShowReplies(!showReplies)}
+                        className={cn(
+                            "group/replies",
+                            showReplies ? "text-background bg-accent" : "text-foreground"
+                        )}
+                    >
+                        {showReplies === true ? (
+                            <ChevronUp className="group/replies" />
+                        ) : (
+                            <ChevronDown className="group/replies" />
+                        )}
+                        {replyCount === 1
+                            ? "Ver 1 respuesta"
+                            : `Ver las ${replyCount} repuestas`}
+                    </Button>
+                )}
             </div>
+            {repliesLoading && (
+                <div className="my-2 flex w-full items-center justify-center">
+                    <LoaderCircle className="animate-spin" />
+                </div>
+            )}
 
             <div ref={repliesContainerRef}>
-                {/*
-                {replies &&
+                {showReplies &&
                     replies.map((reply) => (
-                        <EcoReply
+                        <EcoPinPanelEcoReply
                             author={reply.author}
                             content={reply.content}
                             updatedAt={reply.updatedAt}
@@ -80,24 +128,7 @@ export const Eco = ({ id, author, content, createdAt, edited, updatedAt }: EcoPr
                             key={reply.id}
                         />
                     ))}
-            */}
             </div>
         </div>
     );
 };
-
-//const EcoReply = ({
-//    id,
-//    author,
-//    content,
-//    createdAt,
-//}: Omit<EcoReplyType, "upvotes" | "downvotes">) => (
-//    <div className="relative my-3 ml-15 flex flex-col space-y-2">
-//        <div className="border-muted group-hover:border-accent absolute -top-14 -left-11 h-20 w-8 rounded-bl-xl border-b border-l transition-colors duration-300" />
-//        <EcoAuthor author={author} createdAt={new Date(createdAt)} />
-//        <div className="ml-10">
-//            <EcoContent content={content} />
-//            {/*<EcoControls type="eco-reply" id={id} />*/}
-//        </div>
-//    </div>
-//);

@@ -4,11 +4,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { EcoVoteButton } from "./eco-vote-button";
 import { fetchEcoPinVotes, postEcoPinVote } from "@/lib/api/eco-pins";
 import { calculateVoteChange } from "@/lib/utils/votes";
 import { EcoPinVote, VoteType } from "@/types/eco";
 import { ControlsDropdownMenu } from "./controls-dropdown-menu";
+import { EcoVoteButton } from "../eco-vote-button";
 
 const ECOPIN_CONTROLS_QUERY_NAME = "eco-pin-controls";
 

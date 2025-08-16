@@ -1,29 +1,42 @@
 "use client";
 
+import * as React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { MessageCircle } from "lucide-react";
 
-import { fetchEcoVotes, postEcoVote } from "@/lib/api/ecos";
-import { EcoVote, EcoVoteDetails, VoteType } from "@/types/eco";
-import { EcoVoteButton } from "./eco-vote-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ControlsDropdownMenu } from "./controls-dropdown-menu";
+import { EcoVoteButton } from "@/components/eco/eco-pin-panel/eco-vote-button";
+import { ControlsDropdownMenu } from "@/components/eco/eco-pin-panel/controls/controls-dropdown-menu";
+import { fetchEcoVotes, postEcoVote } from "@/lib/api/ecos";
 import { calculateVoteChange } from "@/lib/utils/votes";
+import { EcoVote, EcoVoteDetails, VoteType } from "@/types/eco";
+import { EcoPinPanelNewEcoReplyForm } from "../new-eco-reply-form";
+import { User } from "@/types/auth";
+import { cn } from "@/lib/utils/cn";
+import { AnimatePresence, motion } from "motion/react";
 
 const ECO_CONTROLS_QUERY_NAME = "eco-controls";
 
 interface EcoControlsProps {
     id: string;
+    user: User;
+    onReplyFormToggle?: (isOpen: boolean) => void;
 }
 
-export const EcoControls = ({ id }: EcoControlsProps) => {
+export const EcoControls = ({ id, user, onReplyFormToggle }: EcoControlsProps) => {
+    const [showReplyForm, setShowReplyForm] = React.useState(false);
     const queryClient = useQueryClient();
     const { data: votesData, isLoading: votesLoading } = useQuery({
         queryKey: [ECO_CONTROLS_QUERY_NAME, id],
         queryFn: () => fetchEcoVotes(id),
     });
+
+    React.useEffect(() => {
+        if (onReplyFormToggle) onReplyFormToggle(showReplyForm);
+    }, [onReplyFormToggle, showReplyForm]);
+
     const cachedVotes =
         queryClient.getQueryData<EcoVote>([ECO_CONTROLS_QUERY_NAME, id]) ?? votesData;
 
@@ -107,26 +120,50 @@ export const EcoControls = ({ id }: EcoControlsProps) => {
     };
 
     return (
-        <div className="flex flex-row items-center space-x-3">
-            <EcoVoteButton
-                type="up"
-                isCurrentVote={isCurrentVote("up")}
-                voteCount={voteCount("up")}
-                onClick={() => vote.mutate({ voteType: "up" })}
-            />
-            <EcoVoteButton
-                type="down"
-                isCurrentVote={isCurrentVote("down")}
-                voteCount={voteCount("down")}
-                onClick={() => vote.mutate({ voteType: "down" })}
-            />
+        <div className="flex flex-col space-y-3">
+            <div className="flex flex-row items-center space-x-3">
+                <EcoVoteButton
+                    type="up"
+                    isCurrentVote={isCurrentVote("up")}
+                    voteCount={voteCount("up")}
+                    onClick={() => vote.mutate({ voteType: "up" })}
+                />
+                <EcoVoteButton
+                    type="down"
+                    isCurrentVote={isCurrentVote("down")}
+                    voteCount={voteCount("down")}
+                    onClick={() => vote.mutate({ voteType: "down" })}
+                />
 
-            <Button variant="ghost">
-                <MessageCircle />
-                Responder
-            </Button>
+                <Button
+                    variant="ghost"
+                    onClick={() => setShowReplyForm(!showReplyForm)}
+                    className={cn(
+                        "group/reply",
+                        showReplyForm ? "text-background bg-accent" : "text-foreground"
+                    )}
+                >
+                    <MessageCircle className="group/reply" />
+                    Responder
+                </Button>
 
-            <ControlsDropdownMenu />
+                <ControlsDropdownMenu />
+            </div>
+
+            <AnimatePresence>
+                {showReplyForm && (
+                    <motion.div
+                        key="reply-form"
+                        initial={{ opacity: 0, height: 0, y: -10 }}
+                        animate={{ opacity: 1, height: "auto", y: 0 }}
+                        exit={{ opacity: 0, height: 0, y: -10 }}
+                        transition={{ duration: 0.25, ease: "easeInOut" }}
+                        className="overflow-hidden"
+                    >
+                        <EcoPinPanelNewEcoReplyForm user={user} ecoId={id} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

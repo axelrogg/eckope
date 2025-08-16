@@ -1,12 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { useForm } from "react-hook-form";
+
+import {
+    newEcoReplyFormSchema,
+    NewEcoReplyFormSchemaType,
+} from "@/lib/schemas/new-eco-reply";
+import { User } from "@/types/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { postEcoReply } from "@/lib/api/eco-replies";
 import { toast } from "sonner";
-import { LoaderCircle, Send } from "lucide-react";
-
+import { EcoReply } from "@/types/eco";
 import {
     Form,
     FormControl,
@@ -16,24 +22,24 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { newEcoFormSchema, NewEcoFormSchemaType } from "@/lib/schemas/new-eco";
-import { postEco } from "@/lib/api/ecos";
-import { User } from "@/types/auth";
-import { Eco } from "@/types/eco";
+import { LoaderCircle, Send } from "lucide-react";
 
-interface EcoPinPanelNewEcoFormProps {
+interface EcoPinPanelNewEcoReplyFormProps {
     user: User;
-    ecoPinId: string;
+    ecoId: string;
 }
 
-export const EcoPinPanelNewEcoForm = ({ user, ecoPinId }: EcoPinPanelNewEcoFormProps) => {
+export const EcoPinPanelNewEcoReplyForm = ({
+    user,
+    ecoId,
+}: EcoPinPanelNewEcoReplyFormProps) => {
     const queryClient = useQueryClient();
-    const form = useForm<NewEcoFormSchemaType>({
-        resolver: zodResolver(newEcoFormSchema),
+    const form = useForm<NewEcoReplyFormSchemaType>({
+        resolver: zodResolver(newEcoReplyFormSchema),
         defaultValues: {
             content: "",
             userId: user.id,
-            ecoPinId,
+            ecoId,
         },
     });
 
@@ -41,12 +47,12 @@ export const EcoPinPanelNewEcoForm = ({ user, ecoPinId }: EcoPinPanelNewEcoFormP
         form.reset({
             content: "",
             userId: user.id,
-            ecoPinId,
+            ecoId,
         });
-    }, [ecoPinId, form, user]);
+    }, [ecoId, form, user]);
 
-    const newEco = useMutation({
-        mutationFn: (values: NewEcoFormSchemaType) => postEco(values),
+    const newReply = useMutation({
+        mutationFn: (values: NewEcoReplyFormSchemaType) => postEcoReply(values),
         onError: (err) => {
             console.error(err);
             toast.error("Uy, algo pasó", {
@@ -54,12 +60,11 @@ export const EcoPinPanelNewEcoForm = ({ user, ecoPinId }: EcoPinPanelNewEcoFormP
             });
         },
         onSuccess: (data) => {
-            queryClient.setQueryData<Eco[]>(["eco-list", ecoPinId], (old) => {
+            queryClient.setQueryData<EcoReply[]>(["eco-reply-list", ecoId], (old) => {
                 if (!old) return [];
                 return old ? [data, ...old] : [data];
             });
-
-            form.reset({ content: "", userId: user.id, ecoPinId });
+            form.reset({ content: "", userId: user.id, ecoId });
         },
     });
 
@@ -68,7 +73,7 @@ export const EcoPinPanelNewEcoForm = ({ user, ecoPinId }: EcoPinPanelNewEcoFormP
     return (
         <Form {...form}>
             <form
-                onSubmit={form.handleSubmit((values) => newEco.mutate(values))}
+                onSubmit={form.handleSubmit((values) => newReply.mutate(values))}
                 className="flex w-full flex-row justify-between space-x-3 rounded-lg"
             >
                 <FormField
@@ -78,9 +83,9 @@ export const EcoPinPanelNewEcoForm = ({ user, ecoPinId }: EcoPinPanelNewEcoFormP
                         <FormItem className="flex-1">
                             <FormControl>
                                 <Input
-                                    placeholder="Responde con tu eco"
+                                    placeholder="Aporta con tu respuesta"
                                     {...field}
-                                    disabled={newEco.isPending}
+                                    disabled={newReply.isPending}
                                 />
                             </FormControl>
                             <FormMessage />
@@ -90,9 +95,9 @@ export const EcoPinPanelNewEcoForm = ({ user, ecoPinId }: EcoPinPanelNewEcoFormP
                 <Button
                     variant="ghost"
                     type="submit"
-                    disabled={newEco.isPending || !reply || reply.length === 0}
+                    disabled={newReply.isPending || !reply || reply.length === 0}
                 >
-                    {newEco.isPending ? (
+                    {newReply.isPending ? (
                         <LoaderCircle className="animate-spin" />
                     ) : (
                         <Send />

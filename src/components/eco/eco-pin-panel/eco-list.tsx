@@ -1,17 +1,19 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useQuery } from "@tanstack/react-query";
 
-import { fetchEcosByPinId } from "@/lib/api/eco-pins";
-import { EcoPinPanelEcoListSkeleton } from "./skeletons";
-import { dateUtils } from "@/lib/utils/date";
-import { Eco } from "@/components/eco/eco-pin-panel/eco";
+import { EcoPinPanelEco } from "@/components/eco/eco-pin-panel/eco";
 import { Separator } from "@/components/ui/separator";
+import { EcoPinPanelEcoListSkeleton } from "./skeletons";
+import { fetchEcosByPinId } from "@/lib/api/eco-pins";
+import { dateUtils } from "@/lib/utils/date";
+import { User } from "@/types/auth";
 
 interface EcoPinPanelEcoListProps {
+    user: User;
     ecoPinId: string;
 }
 
-export const EcoPinPanelEcoList = ({ ecoPinId }: EcoPinPanelEcoListProps) => {
+export const EcoPinPanelEcoList = ({ user, ecoPinId }: EcoPinPanelEcoListProps) => {
     const { data: ecos = [], isLoading: ecosLoading } = useQuery({
         queryKey: ["eco-list", ecoPinId],
         queryFn: () => fetchEcosByPinId(ecoPinId),
@@ -54,8 +56,9 @@ export const EcoPinPanelEcoList = ({ ecoPinId }: EcoPinPanelEcoListProps) => {
                     }}
                     layout
                 >
-                    <Eco
+                    <EcoPinPanelEco
                         id={eco.id}
+                        user={user}
                         replyCount={eco.replyCount}
                         content={eco.content}
                         author={eco.author}

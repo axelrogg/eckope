@@ -17,7 +17,7 @@ import { EcoAuthor } from "@/components/eco/eco-pin-panel/eco-author";
 import { EcoPinPanelCloseButton } from "./close-button";
 import { EcoPinPanelPinContentSkeleton, EcoPinPanelHeaderSkeleton } from "./skeletons";
 import { EcoContent } from "@/components/eco/eco-pin-panel/eco-content";
-import { EcoPinControls } from "@/components/eco/eco-pin-panel/eco-pin-controls";
+import { EcoPinControls } from "@/components/eco/eco-pin-panel/controls/eco-pin-controls";
 import { EcoPinPanelEcoList } from "@/components/eco/eco-pin-panel/eco-list";
 import { EcoPinPanelNewEcoForm } from "./new-eco-form";
 
@@ -69,7 +69,7 @@ export const EcoPinPanel = ({ user }: EcoPinPanelProps) => {
                         <EcoPinPanelNewEcoForm user={user} ecoPinId={activePin.id} />
                     </div>
                 )}
-                <EcoPinPanelEcoList ecoPinId={activePin.id} />
+                <EcoPinPanelEcoList ecoPinId={activePin.id} user={user} />
             </SidePanelContent>
         </SidePanel>
     );
