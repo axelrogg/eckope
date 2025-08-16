@@ -1,4 +1,4 @@
-import { Eco, EcoVote, EcoVoteDetails, VoteType } from "@/types/eco";
+import { Eco, EcoReply, EcoVote, EcoVoteDetails, VoteType } from "@/types/eco";
 import { HttpSuccessResponseOptions } from "@/types/http-response";
 import { NewEcoFormSchemaType } from "@/lib/schemas/new-eco";
 
@@ -32,5 +32,12 @@ export async function postEcoVote(ecoId: string, voteType: VoteType) {
     });
     if (!response.ok) throw new Error(await response.text());
     const result = await response.json<HttpSuccessResponseOptions<EcoVoteDetails>>();
+    return result.data;
+}
+
+export async function fetchEcoRepliesByEcoId(ecoId: string) {
+    const response = await fetch(`/api/ecos/${ecoId}/replies`);
+    if (!response.ok) throw new Error(await response.text());
+    const result = await response.json<HttpSuccessResponseOptions<EcoReply[]>>();
     return result.data;
 }

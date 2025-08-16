@@ -3,10 +3,11 @@ import {
     ecos,
     ecoVotes,
     usersInNextAuth,
+    ecoReplies,
+    ecoReplyVotes,
     peruDepartments,
     peruProvinces,
     ecoPins,
-    ecoReplies,
     ecoPinVotes,
     peruDistricts,
     sessionsInNextAuth,
@@ -39,12 +40,36 @@ export const ecosRelations = relations(ecos, ({ one, many }) => ({
 
 export const usersInNextAuthRelations = relations(usersInNextAuth, ({ many }) => ({
     ecoVotes: many(ecoVotes),
+    ecoReplyVotes: many(ecoReplyVotes),
     ecos: many(ecos),
     ecoReplies: many(ecoReplies),
     ecoPinVotes: many(ecoPinVotes),
     ecoPins: many(ecoPins),
     sessionsInNextAuths: many(sessionsInNextAuth),
     accountsInNextAuths: many(accountsInNextAuth),
+}));
+
+export const ecoReplyVotesRelations = relations(ecoReplyVotes, ({ one }) => ({
+    ecoReply: one(ecoReplies, {
+        fields: [ecoReplyVotes.ecoReplyId],
+        references: [ecoReplies.id],
+    }),
+    usersInNextAuth: one(usersInNextAuth, {
+        fields: [ecoReplyVotes.userId],
+        references: [usersInNextAuth.id],
+    }),
+}));
+
+export const ecoRepliesRelations = relations(ecoReplies, ({ one, many }) => ({
+    ecoReplyVotes: many(ecoReplyVotes),
+    eco: one(ecos, {
+        fields: [ecoReplies.ecoId],
+        references: [ecos.id],
+    }),
+    usersInNextAuth: one(usersInNextAuth, {
+        fields: [ecoReplies.userId],
+        references: [usersInNextAuth.id],
+    }),
 }));
 
 export const peruProvincesRelations = relations(peruProvinces, ({ one, many }) => ({
@@ -65,17 +90,6 @@ export const ecoPinsRelations = relations(ecoPins, ({ one, many }) => ({
     ecoPinVotes: many(ecoPinVotes),
     usersInNextAuth: one(usersInNextAuth, {
         fields: [ecoPins.userId],
-        references: [usersInNextAuth.id],
-    }),
-}));
-
-export const ecoRepliesRelations = relations(ecoReplies, ({ one }) => ({
-    eco: one(ecos, {
-        fields: [ecoReplies.ecoId],
-        references: [ecos.id],
-    }),
-    usersInNextAuth: one(usersInNextAuth, {
-        fields: [ecoReplies.userId],
         references: [usersInNextAuth.id],
     }),
 }));

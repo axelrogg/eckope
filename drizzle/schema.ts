@@ -60,6 +60,39 @@ export const ecoVotes = pgTable(
     ]
 );
 
+export const ecoReplyVotes = pgTable(
+    "eco_reply_votes",
+    {
+        id: uuid().defaultRandom().primaryKey().notNull(),
+        userId: uuid("user_id"),
+        ecoReplyId: uuid("eco_reply_id").notNull(),
+        voteType: varchar("vote_type", { length: 10 }).notNull(),
+        createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+            .defaultNow()
+            .notNull(),
+    },
+    (table) => [
+        foreignKey({
+            columns: [table.ecoReplyId],
+            foreignColumns: [ecoReplies.id],
+            name: "eco_reply_votes_eco_reply_id_fkey",
+        }).onDelete("cascade"),
+        foreignKey({
+            columns: [table.userId],
+            foreignColumns: [usersInNextAuth.id],
+            name: "eco_reply_votes_user_id_fkey",
+        }).onDelete("set null"),
+        unique("eco_reply_votes_user_id_eco_reply_id_key").on(
+            table.userId,
+            table.ecoReplyId
+        ),
+        check(
+            "eco_reply_votes_vote_type_check",
+            sql`(vote_type)::text = ANY ((ARRAY['up'::character varying, 'down'::character varying])::text[])`
+        ),
+    ]
+);
+
 export const peruProvinces = pgTable(
     "peru_provinces",
     {

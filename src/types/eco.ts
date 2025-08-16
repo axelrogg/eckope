@@ -66,11 +66,14 @@ export type EcoType = "eco-pin" | "eco" | "reply";
 export type EcoPinVoteCount = { ecoPinId: string } & VoteCounts;
 export type EcoPinVoteDetails = { vote: Vote; count: EcoPinVoteCount };
 export type EcoPinVoteUnauthenticated = { ecoPinId: string } & VoteCounts;
-
 export type EcoPinVote = EcoPinVoteDetails | EcoPinVoteUnauthenticated;
 
 export type EcoVoteCount = { ecoId: string } & VoteCounts;
 export type EcoVoteDetails = { vote: Vote; count: EcoVoteCount };
 export type EcoVoteUnauthenticated = { ecoId: string } & VoteCounts;
-
 export type EcoVote = EcoVoteDetails | EcoVoteUnauthenticated;
+
+export type EcoReplyVoteCount = { ecoReplyId: string } & VoteCounts;
+export type EcoReplyVoteDetails = { vote: Vote; count: EcoReplyVoteCount };
+export type EcoReplyVoteUnauthenticated = { ecoReplyId: string } & VoteCounts;
+export type EcoReplyVote = EcoReplyVoteDetails | EcoReplyVoteUnauthenticated;
