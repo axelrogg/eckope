@@ -2,7 +2,6 @@
 
 import * as React from "react";
 
-import { User } from "next-auth";
 import { AnimatePresence } from "motion/react";
 import { CircleUserRound } from "lucide-react";
 
@@ -10,6 +9,7 @@ import { SidebarMenu, useSidebar } from "@/components/ui/sidebar";
 import { NavUserDropdown } from "@/components/sidebar/nav-user/nav-user-dropdown";
 import { AuthButtons } from "@/components/sidebar/nav-user/auth";
 import { AuthSidebarItem } from "@/components/sidebar/nav-user/auth";
+import { User } from "@/types/auth";
 
 interface NavUserProps {
     user?: User;

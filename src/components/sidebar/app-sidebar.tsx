@@ -1,5 +1,5 @@
 import { auth, signOut } from "@/auth";
-import { BadgeInfo, Home } from "lucide-react";
+import { BadgeInfo, Hammer, Map } from "lucide-react";
 
 import {
     Sidebar,
@@ -18,18 +18,18 @@ const menuItems = [
     {
         title: "Mapa",
         url: "/",
-        icon: Home,
+        icon: Map,
     },
     {
         title: "¿Qué es Éckope?",
         url: "/about",
         icon: BadgeInfo,
     },
-    //{
-    //    title: "¿Cómo contribuir?",
-    //    url: "/como-contribuir",
-    //    icon: Hammer,
-    //},
+    {
+        title: "¿Cómo contribuir?",
+        url: "/como-contribuir",
+        icon: Hammer,
+    },
 ];
 
 export const AppSidebar = async () => {

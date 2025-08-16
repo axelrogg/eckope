@@ -12,6 +12,6 @@ export const AuthSidebarItem = ({ icon }: { icon: React.ReactNode }) => (
         transition={{ duration: 0.2 }}
         className="overflow-hidden"
     >
-        <SidebarItem title="Ingresar sesión" url="/auth/login" icon={icon} />
+        <SidebarItem title="Accede ahora" url="/auth" icon={icon} />
     </motion.div>
 );
