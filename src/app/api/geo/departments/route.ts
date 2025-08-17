@@ -8,6 +8,7 @@ import { toGeoJSON } from "@/lib/utils/to-geojson";
 import { projectSQLGeometry } from "@/lib/utils/project-geometry";
 import { departmentRequestQuerySchema } from "@/lib/schemas/geo/department";
 import { httpErrorResponse } from "@/lib/http/response";
+import { Geometry } from "geojson";
 
 export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
@@ -72,7 +73,7 @@ export async function GET(req: NextRequest) {
                             lengthKm: dep.lengthKm,
                             areaKm2: dep.areaKm2,
                         },
-                        geometry: dep.geometry,
+                        geometry: dep.geometry as Geometry,
                     }))
                 )
             );

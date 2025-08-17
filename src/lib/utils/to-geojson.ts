@@ -1,4 +1,9 @@
-import { GeoJSONEntity } from "@/types/geojson";
+import { Geometry } from "geojson";
+
+interface GeoJSONEntity<T extends Record<string, unknown> = Record<string, unknown>> {
+    properties: T;
+    geometry: Geometry;
+}
 
 export function toGeoJSON<T extends Record<string, unknown>>(
     input: GeoJSONEntity<T> | GeoJSONEntity<T>[]

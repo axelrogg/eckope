@@ -8,6 +8,7 @@ import { toGeoJSON } from "@/lib/utils/to-geojson";
 import { provinceRequestQuerySchema } from "@/lib/schemas/geo/province";
 import { projectSQLGeometry } from "@/lib/utils/project-geometry";
 import { httpErrorResponse } from "@/lib/http/response";
+import { Geometry } from "geojson";
 
 export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
@@ -89,7 +90,7 @@ export async function GET(req: NextRequest) {
                             areaKm2: prov.areaKm2,
                             deparment: prov.department,
                         },
-                        geometry: prov.geometry,
+                        geometry: prov.geometry as Geometry,
                     }))
                 )
             );
