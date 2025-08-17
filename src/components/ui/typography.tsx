@@ -26,7 +26,10 @@ const TypographyH2 = ({ className, children, ...props }: React.ComponentProps<"h
 
 const TypographyH3 = ({ className, children, ...props }: React.ComponentProps<"h3">) => (
     <h2
-        className={cn("scroll-m-20 text-2xl font-semibold tracking-tight", className)}
+        className={cn(
+            "mt-4 scroll-m-20 text-2xl font-semibold tracking-tight",
+            className
+        )}
         {...props}
     >
         {children}
@@ -43,7 +46,7 @@ const TypographyH4 = ({ className, children, ...props }: React.ComponentProps<"h
 );
 
 const TypographyP = ({ className, children, ...props }: React.ComponentProps<"p">) => (
-    <p className={cn("leading-7 [&:not(:first-child)]:mt-6", className)} {...props}>
+    <p className={cn("leading-7 [&:not(:first-child)]:mt-2", className)} {...props}>
         {children}
     </p>
 );
