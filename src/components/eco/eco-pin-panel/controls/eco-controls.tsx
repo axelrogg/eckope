@@ -22,7 +22,7 @@ const ECO_CONTROLS_QUERY_NAME = "eco-controls";
 
 interface EcoControlsProps {
     id: string;
-    user: User;
+    user: User | null;
     onReplyFormToggle?: (isOpen: boolean) => void;
 }
 

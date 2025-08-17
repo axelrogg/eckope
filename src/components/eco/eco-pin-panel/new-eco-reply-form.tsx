@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { LoaderCircle, Send } from "lucide-react";
 
 interface EcoPinPanelNewEcoReplyFormProps {
-    user: User;
+    user: User | null;
     ecoId: string;
 }
 
@@ -38,7 +38,7 @@ export const EcoPinPanelNewEcoReplyForm = ({
         resolver: zodResolver(newEcoReplyFormSchema),
         defaultValues: {
             content: "",
-            userId: user.id,
+            userId: user ? user.id : "",
             ecoId,
         },
     });
@@ -46,7 +46,7 @@ export const EcoPinPanelNewEcoReplyForm = ({
     React.useEffect(() => {
         form.reset({
             content: "",
-            userId: user.id,
+            userId: user ? user.id : "",
             ecoId,
         });
     }, [ecoId, form, user]);
@@ -64,7 +64,7 @@ export const EcoPinPanelNewEcoReplyForm = ({
                 if (!old) return [];
                 return old ? [data, ...old] : [data];
             });
-            form.reset({ content: "", userId: user.id, ecoId });
+            form.reset({ content: "", userId: user ? user.id : "", ecoId });
         },
     });
 

@@ -118,6 +118,7 @@ export const EcoPinPanelEco = ({
                 {showReplies &&
                     replies.map((reply) => (
                         <EcoPinPanelEcoReply
+                            user={user}
                             author={reply.author}
                             content={reply.content}
                             updatedAt={reply.updatedAt}

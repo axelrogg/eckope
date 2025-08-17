@@ -9,14 +9,16 @@ import { EcoReplyVote, EcoReplyVoteDetails, VoteType } from "@/types/eco";
 import { fetchEcoReplyVotes, postEcoReplyVote } from "@/lib/api/eco-replies";
 import { EcoVoteButton } from "../eco-vote-button";
 import { ControlsDropdownMenu } from "./controls-dropdown-menu";
+import { User } from "@/types/auth";
 
 const ECO_REPLY_CONTROLS_QUERY_NAME = "eco-reply-controls";
 
 interface EcoReplyControlsProps {
     id: string;
+    user: User | null;
 }
 
-export const EcoReplyControls = ({ id }: EcoReplyControlsProps) => {
+export const EcoReplyControls = ({ id, user }: EcoReplyControlsProps) => {
     const queryClient = useQueryClient();
     const { data: votesData, isLoading: votesLoading } = useQuery({
         queryKey: [ECO_REPLY_CONTROLS_QUERY_NAME, id],
@@ -113,12 +115,14 @@ export const EcoReplyControls = ({ id }: EcoReplyControlsProps) => {
     return (
         <div className="flex flex-row items-center space-x-3">
             <EcoVoteButton
+                user={user}
                 type="up"
                 isCurrentVote={isCurrentVote("up")}
                 voteCount={voteCount("up")}
                 onClick={() => vote.mutate({ voteType: "up" })}
             />
             <EcoVoteButton
+                user={user}
                 type="down"
                 isCurrentVote={isCurrentVote("down")}
                 voteCount={voteCount("down")}
