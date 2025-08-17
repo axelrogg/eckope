@@ -2,17 +2,21 @@ import { AnimatePresence, motion } from "motion/react";
 import { ArrowBigDown, ArrowBigUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ControlAuthPrompt } from "./controls/control-auth-prompt";
 import { cn } from "@/lib/utils/cn";
 import { VoteType } from "@/types/eco";
+import { User } from "@/types/auth";
 
 interface EcoVoteButtonProps {
     type: VoteType;
     isCurrentVote: boolean;
     voteCount: number;
+    user: User | null;
     onClick: () => void;
 }
 
 export const EcoVoteButton = ({
+    user,
     type,
     isCurrentVote,
     voteCount,
@@ -20,10 +24,18 @@ export const EcoVoteButton = ({
 }: EcoVoteButtonProps) => {
     const ButtonIcon = type === "up" ? ArrowBigUp : ArrowBigDown;
 
+    if (!user) {
+        return (
+            <ControlAuthPrompt>
+                <ButtonIcon className="group-hover/button:text-background transition-colors duration-300" />
+            </ControlAuthPrompt>
+        );
+    }
+
     return (
         <Button
             variant="ghost"
-            className="group/button relative overflow-hidden"
+            className="group/button relative overflow-hidden px-3"
             onClick={onClick}
         >
             <motion.div

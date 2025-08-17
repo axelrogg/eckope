@@ -11,10 +11,7 @@ import { SidePanelProvider } from "@/components/side-panel/side-panel-provider";
 
 export default async function Home() {
     const session = await auth();
-
-    if (!session || !session.user) {
-        return null;
-    }
+    const user = session ? session.user : null;
 
     return (
         <MapProvider>
@@ -25,8 +22,8 @@ export default async function Home() {
                     <MapToolBar />
                     */}
                 <MapClient />
-                <EcoPinPanel user={session.user} />
-                <NewEcoSidePanel user={session.user} />
+                <EcoPinPanel user={user} />
+                <NewEcoSidePanel user={user} />
                 <NewEcoPrompt />
             </SidePanelProvider>
             {/*</MapGeoFilterProvider> */}

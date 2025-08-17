@@ -20,9 +20,10 @@ import { EcoContent } from "@/components/eco/eco-pin-panel/eco-content";
 import { EcoPinControls } from "@/components/eco/eco-pin-panel/controls/eco-pin-controls";
 import { EcoPinPanelEcoList } from "@/components/eco/eco-pin-panel/eco-list";
 import { EcoPinPanelNewEcoForm } from "./new-eco-form";
+import { Button } from "@/components/ui/button";
 
 interface EcoPinPanelProps {
-    user: User;
+    user: User | null;
 }
 
 export const EcoPinPanel = ({ user }: EcoPinPanelProps) => {
@@ -65,8 +66,14 @@ export const EcoPinPanel = ({ user }: EcoPinPanelProps) => {
                 ) : (
                     <div className="space-y-3">
                         <EcoContent content={ecoPin.content} maxLines={15} />
-                        <EcoPinControls id={ecoPin.id} />
-                        <EcoPinPanelNewEcoForm user={user} ecoPinId={activePin.id} />
+                        <EcoPinControls id={ecoPin.id} user={user} />
+                        {user ? (
+                            <EcoPinPanelNewEcoForm user={user} ecoPinId={activePin.id} />
+                        ) : (
+                            <Button variant="destructive" className="w-full">
+                                Inicia sesión
+                            </Button>
+                        )}
                     </div>
                 )}
                 <EcoPinPanelEcoList ecoPinId={activePin.id} user={user} />

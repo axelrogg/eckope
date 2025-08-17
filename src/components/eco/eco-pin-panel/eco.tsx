@@ -15,7 +15,7 @@ import { EcoPinPanelEcoReply } from "./eco-reply";
 import { cn } from "@/lib/utils/cn";
 
 type EcoProps = Omit<EcoType, "ecoPinId" | "editedAt" | "upvotes" | "downvotes"> & {
-    user: User;
+    user: User | null;
 };
 
 export const EcoPinPanelEco = ({

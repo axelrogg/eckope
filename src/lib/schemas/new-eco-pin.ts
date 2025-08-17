@@ -54,8 +54,8 @@ export const newEcoPinFormSchema = z
 
 export type NewEcoPinFormSchemaType = z.infer<typeof newEcoPinFormSchema>;
 
-export const newEcoPinFormDefaultValues = (user: User) => ({
-    userId: user.id,
+export const newEcoPinFormDefaultValues = (user: User | null) => ({
+    userId: user ? user.id : "",
     title: "",
     category: "",
     customCategory: "",

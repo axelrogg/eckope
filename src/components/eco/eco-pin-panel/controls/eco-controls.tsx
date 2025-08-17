@@ -16,6 +16,7 @@ import { EcoPinPanelNewEcoReplyForm } from "../new-eco-reply-form";
 import { User } from "@/types/auth";
 import { cn } from "@/lib/utils/cn";
 import { AnimatePresence, motion } from "motion/react";
+import { ControlAuthPrompt } from "./control-auth-prompt";
 
 const ECO_CONTROLS_QUERY_NAME = "eco-controls";
 
@@ -123,29 +124,40 @@ export const EcoControls = ({ id, user, onReplyFormToggle }: EcoControlsProps) =
         <div className="flex flex-col space-y-3">
             <div className="flex flex-row items-center space-x-3">
                 <EcoVoteButton
+                    user={user}
                     type="up"
                     isCurrentVote={isCurrentVote("up")}
                     voteCount={voteCount("up")}
                     onClick={() => vote.mutate({ voteType: "up" })}
                 />
                 <EcoVoteButton
+                    user={user}
                     type="down"
                     isCurrentVote={isCurrentVote("down")}
                     voteCount={voteCount("down")}
                     onClick={() => vote.mutate({ voteType: "down" })}
                 />
 
-                <Button
-                    variant="ghost"
-                    onClick={() => setShowReplyForm(!showReplyForm)}
-                    className={cn(
-                        "group/reply",
-                        showReplyForm ? "text-background bg-accent" : "text-foreground"
-                    )}
-                >
-                    <MessageCircle className="group/reply" />
-                    Responder
-                </Button>
+                {!user ? (
+                    <ControlAuthPrompt>
+                        <MessageCircle className="group/reply" />
+                        Responder
+                    </ControlAuthPrompt>
+                ) : (
+                    <Button
+                        variant="ghost"
+                        onClick={() => setShowReplyForm(!showReplyForm)}
+                        className={cn(
+                            "group/reply",
+                            showReplyForm
+                                ? "text-background bg-accent"
+                                : "text-foreground"
+                        )}
+                    >
+                        <MessageCircle className="group/reply" />
+                        Responder
+                    </Button>
+                )}
 
                 <ControlsDropdownMenu />
             </div>

@@ -9,14 +9,16 @@ import { calculateVoteChange } from "@/lib/utils/votes";
 import { EcoPinVote, VoteType } from "@/types/eco";
 import { ControlsDropdownMenu } from "./controls-dropdown-menu";
 import { EcoVoteButton } from "../eco-vote-button";
+import { User } from "@/types/auth";
 
 const ECOPIN_CONTROLS_QUERY_NAME = "eco-pin-controls";
 
 interface EcoPinControlsProps {
+    user: User | null;
     id: string;
 }
 
-export const EcoPinControls = ({ id }: EcoPinControlsProps) => {
+export const EcoPinControls = ({ id, user }: EcoPinControlsProps) => {
     const queryClient = useQueryClient();
     const { data: votesData, isLoading: votesLoading } = useQuery({
         queryKey: [ECOPIN_CONTROLS_QUERY_NAME, id],
@@ -111,6 +113,7 @@ export const EcoPinControls = ({ id }: EcoPinControlsProps) => {
     return (
         <div className="flex flex-row items-center space-x-3">
             <EcoVoteButton
+                user={user}
                 type="up"
                 isCurrentVote={isCurrentVote("up")}
                 voteCount={voteCount("up")}
@@ -118,6 +121,7 @@ export const EcoPinControls = ({ id }: EcoPinControlsProps) => {
             />
 
             <EcoVoteButton
+                user={user}
                 type="down"
                 isCurrentVote={isCurrentVote("down")}
                 voteCount={voteCount("down")}

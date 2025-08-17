@@ -9,7 +9,7 @@ import { dateUtils } from "@/lib/utils/date";
 import { User } from "@/types/auth";
 
 interface EcoPinPanelEcoListProps {
-    user: User;
+    user: User | null;
     ecoPinId: string;
 }
 
