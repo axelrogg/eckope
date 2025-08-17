@@ -7,6 +7,7 @@ import { newEcoPinFormSchema } from "@/lib/schemas/new-eco-pin";
 import { ecoPins } from "@root/drizzle/schema";
 import { httpErrorResponse, httpSuccessResponse } from "@/lib/http/response";
 import { parseApiRequestBody } from "@/lib/utils/api/parse-api-request-body";
+import { projectSQLGeometry } from "@/lib/utils/project-geometry";
 
 const INSTANCE_PATH = "/api/eco-pins";
 
@@ -58,6 +59,10 @@ export async function POST(req: NextRequest) {
             })
             .returning({
                 id: ecoPins.id,
+                location: projectSQLGeometry(ecoPins.location),
+                createdAt: ecoPins.createdAt,
+                updatedAt: ecoPins.updatedAt,
+                severity: ecoPins.severity,
             });
 
         return httpSuccessResponse({
