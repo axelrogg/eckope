@@ -15,7 +15,7 @@ interface Collaborators {
 
 export const collaborators: Collaborators[] = [
     {
-        name: "Saskia Harumi Rodriguez Obando",
+        name: "Saskia Harumi Rodríguez Obando",
         bio: "Soy una estudiante de diseño profesional gráfico creativa e innovadora que le encanta jugar videojuegos y escuchar musica.",
         role: "Diseñadora gráfica",
         avatarUrl: "/collaborator-saskia_harumi_rodriguez_obando.jpeg",
