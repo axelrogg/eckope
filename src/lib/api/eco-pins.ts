@@ -1,5 +1,7 @@
 import { HttpSuccessResponseOptions } from "@/types/http-response";
 import { Eco, EcoPin, EcoPinVote, EcoPinVoteDetails, VoteType } from "@/types/eco";
+import { NewEcoPinFormSchemaType } from "../schemas/new-eco-pin";
+import { MapEcoPin } from "@/types/map";
 
 export async function fetchEcoPinById(ecoPinId: string) {
     const response = await fetch(`/api/eco-pins/${ecoPinId}`);
@@ -32,5 +34,15 @@ export async function postEcoPinVote(ecoPinId: string, voteType: VoteType) {
     });
     if (!response.ok) throw new Error(await response.text());
     const result = await response.json<HttpSuccessResponseOptions<EcoPinVoteDetails>>();
+    return result.data;
+}
+
+export async function createNewEcoPin(values: NewEcoPinFormSchemaType) {
+    const response = await fetch(`/api/eco-pins`, {
+        method: "POST",
+        body: JSON.stringify(values),
+    });
+    if (!response.ok) throw new Error(await response.text());
+    const result = await response.json<HttpSuccessResponseOptions<MapEcoPin>>();
     return result.data;
 }

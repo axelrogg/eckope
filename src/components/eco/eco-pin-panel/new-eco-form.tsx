@@ -22,17 +22,18 @@ import { User } from "@/types/auth";
 import { Eco } from "@/types/eco";
 
 interface EcoPinPanelNewEcoFormProps {
-    user: User;
+    user: User | null;
     ecoPinId: string;
 }
 
 export const EcoPinPanelNewEcoForm = ({ user, ecoPinId }: EcoPinPanelNewEcoFormProps) => {
     const queryClient = useQueryClient();
+    const userId = user ? user.id : "";
     const form = useForm<NewEcoFormSchemaType>({
         resolver: zodResolver(newEcoFormSchema),
         defaultValues: {
             content: "",
-            userId: user.id,
+            userId,
             ecoPinId,
         },
     });
@@ -40,10 +41,10 @@ export const EcoPinPanelNewEcoForm = ({ user, ecoPinId }: EcoPinPanelNewEcoFormP
     React.useEffect(() => {
         form.reset({
             content: "",
-            userId: user.id,
+            userId,
             ecoPinId,
         });
-    }, [ecoPinId, form, user]);
+    }, [ecoPinId, form, userId]);
 
     const newEco = useMutation({
         mutationFn: (values: NewEcoFormSchemaType) => postEco(values),
@@ -58,8 +59,7 @@ export const EcoPinPanelNewEcoForm = ({ user, ecoPinId }: EcoPinPanelNewEcoFormP
                 if (!old) return [];
                 return old ? [data, ...old] : [data];
             });
-
-            form.reset({ content: "", userId: user.id, ecoPinId });
+            form.reset({ content: "", userId, ecoPinId });
         },
     });
 
