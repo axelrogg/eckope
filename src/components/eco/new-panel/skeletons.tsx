@@ -40,7 +40,7 @@ export const NewEcoPinPanelHeaderSkeleton = () => {
     );
 };
 
-export const NewEcoPinPrompt = () => {
+export const NewEcoPinPromptSkeleton = () => {
     const { closeAllPanels } = useSidePanel();
     return (
         <CardHeader className="space-y-2">

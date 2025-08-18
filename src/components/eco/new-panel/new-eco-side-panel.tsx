@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 
 import { User } from "next-auth";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle, Map, RotateCcw, X } from "lucide-react";
@@ -32,7 +32,6 @@ import {
     SidePanel,
     SidePanelAction,
     SidePanelContent,
-    SidePanelDescription,
     SidePanelHeader,
     SidePanelTitle,
 } from "@/components/side-panel/side-panel";
@@ -123,7 +122,7 @@ export const NewEcoSidePanel = ({ user }: NewEcoSidePanelProps) => {
     }
 
     return (
-        <SidePanel show={isPanelOpen("newEco")}>
+        <SidePanel show={isPanelOpen("newEco")} className="gap-3">
             {locationIsLoading && (
                 <React.Fragment>
                     <NewEcoPinPanelHeaderSkeleton />
@@ -160,29 +159,7 @@ export const NewEcoSidePanel = ({ user }: NewEcoSidePanelProps) => {
                     <SidePanelHeader>
                         <SidePanelTitle className="text-xl">
                             ¿Qué eco quieres hacer sonar?
-                            {locationResult?.display_name && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: "auto" }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                                    className="text-muted-foreground my-2 items-center gap-3 rounded-lg border p-3 text-sm"
-                                >
-                                    <div className="group flex flex-row gap-3 text-sm">
-                                        <div className="flex min-w-[24px] items-center justify-center">
-                                            <Map className="group-hover:animate-bounce" />
-                                        </div>
-                                        <span className="leading-snug break-words">
-                                            {locationResult?.display_name}
-                                        </span>
-                                    </div>
-                                </motion.div>
-                            )}
                         </SidePanelTitle>
-                        <SidePanelDescription className="flex flex-col space-y-2">
-                            Cuéntanos lo que está pasando. No tengas miedo de ser claro y
-                            directo. Cuanto más detalles, mejor.
-                        </SidePanelDescription>
                         <SidePanelAction>
                             <Button
                                 aria-label="Cerrar formulario"
@@ -194,7 +171,26 @@ export const NewEcoSidePanel = ({ user }: NewEcoSidePanelProps) => {
                             </Button>
                         </SidePanelAction>
                     </SidePanelHeader>
-                    <SidePanelContent>
+                    <SidePanelContent className="space-y-5">
+                        {locationResult?.display_name && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.3, ease: "easeInOut" }}
+                                className="text-muted-foreground items-center gap-3 rounded-lg border p-3 text-sm"
+                            >
+                                <div className="group flex flex-row gap-3 text-sm">
+                                    <div className="flex min-w-[24px] items-center justify-center">
+                                        <Map className="group-hover:animate-bounce" />
+                                    </div>
+                                    <span className="leading-snug break-words">
+                                        {locationResult?.display_name}
+                                    </span>
+                                </div>
+                            </motion.div>
+                        )}
+
                         {user ? (
                             <Form {...form}>
                                 <form
@@ -336,7 +332,6 @@ export const NewEcoSidePanel = ({ user }: NewEcoSidePanelProps) => {
                                             </FormItem>
                                         )}
                                     />
-                                    <AnimatePresence></AnimatePresence>
                                     <FormField
                                         control={form.control}
                                         name="content"

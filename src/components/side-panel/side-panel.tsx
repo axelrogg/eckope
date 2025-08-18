@@ -11,10 +11,12 @@ import {
     CardContent as SidePanelContent,
     CardFooter as SidePanelFooter,
 } from "@/components/ui/card";
+import { cn } from "@/lib/utils/cn";
 
 interface SidePanelProps {
     /** Whether the side panel is visible */
     show: boolean;
+    className?: string;
     /** The content to render inside the side panel */
     children: React.ReactNode;
 }
@@ -50,7 +52,7 @@ interface SidePanelProps {
  * </SidePanel>
  * ```
  */
-const SidePanel = ({ show, children }: SidePanelProps) => {
+const SidePanel = ({ show, className, children }: SidePanelProps) => {
     React.useEffect(() => {
         if (show) {
             document.body.style.overflow = "hidden";
@@ -78,7 +80,9 @@ const SidePanel = ({ show, children }: SidePanelProps) => {
                     onAnimationComplete={handleAnimationComplete}
                 >
                     <ScrollArea className="h-[calc(100svh-1rem)] rounded-xl">
-                        <Card className="min-h-[calc(100svh-1rem)]">{children}</Card>
+                        <Card className={cn("min-h-[calc(100svh-1rem)]", className)}>
+                            {children}
+                        </Card>
                     </ScrollArea>
                 </motion.div>
             )}
