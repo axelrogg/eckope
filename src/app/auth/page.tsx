@@ -70,7 +70,7 @@ export default async function SignInPage({
         <div className="flex h-svh w-svw flex-1 flex-col items-center">
             <span className="my-10 text-4xl font-bold">éckope</span>
             <TypographyH1 className="mb-4">Hola de nuevo</TypographyH1>
-            <span className="mb-8 w-1/3 text-center">
+            <span className="mb-8 w-[calc(100vw-5rem)] text-center lg:w-1/3">
                 ¿No tienes cuenta? No te preocupes, puedes crearla rápidamente con alguno
                 de los botones de abajo.
             </span>
