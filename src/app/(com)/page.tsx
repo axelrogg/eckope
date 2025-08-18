@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { MapClient, MapProvider } from "@/components/map";
 //import { MapToolBar } from "@/components/map/tool-bar/map-tool-bar";
 import { EcoPinPanel } from "@/components/eco/eco-pin-panel/panel";
-import { MapNote } from "./map-note";
+import { Alert } from "./alert";
 import { NewEcoPrompt } from "@/components/eco/new-panel/new-eco-prompt";
 import { NewEcoSidePanel } from "@/components/eco/new-panel/new-eco-side-panel";
 import { SidePanelProvider } from "@/components/side-panel/side-panel-provider";
@@ -17,7 +17,7 @@ export default async function Home() {
         <MapProvider>
             {/*<MapGeoFilterProvider>  */}
             <SidePanelProvider>
-                <MapNote />
+                <Alert />
                 {/*
                     <MapToolBar />
                     */}
