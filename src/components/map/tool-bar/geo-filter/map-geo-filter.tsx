@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatedCombobox } from "@/components/map/tool-bar/geo-filter/animated-combobox";
-import { ResetMapGeoFilterButton } from "@/components/map/tool-bar/geo-filter/reset-map-geo-filter-button";
+import { MapGeoFilterResetButton } from "./map-geo-filter-reset-button";
 import { useMapGeoFilter } from "@/hooks/use-map-geo-filter";
 
 export const MapGeoFilter = () => {
@@ -28,7 +28,7 @@ export const MapGeoFilter = () => {
                     setOption={handleDepartmentSelect}
                     selectedOption={geoSelection.departmentCode}
                 />
-                <ResetMapGeoFilterButton
+                <MapGeoFilterResetButton
                     show={
                         visibility.department &&
                         !(visibility.province || visibility.district)
@@ -49,7 +49,7 @@ export const MapGeoFilter = () => {
                     setOption={handleProvinceSelect}
                     selectedOption={geoSelection.provinceCode}
                 />
-                <ResetMapGeoFilterButton
+                <MapGeoFilterResetButton
                     show={visibility.province && !visibility.district}
                     onClick={resetFilters}
                 />
@@ -69,7 +69,7 @@ export const MapGeoFilter = () => {
                     selectedOption={geoSelection.districtUbigeo}
                 />
                 <div className="xl:hidden">
-                    <ResetMapGeoFilterButton
+                    <MapGeoFilterResetButton
                         show={visibility.district}
                         onClick={resetFilters}
                     />

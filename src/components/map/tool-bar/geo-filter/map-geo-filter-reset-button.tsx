@@ -1,16 +1,19 @@
+"use client";
+
 import { AnimatePresence, motion } from "motion/react";
 import { RotateCcw } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 
-interface ResetMapGeoFilterButtonProps {
+interface MapGeoFilterResetButtonProps {
     show: boolean;
     onClick?: () => void;
 }
 
-export const ResetMapGeoFilterButton = ({
+export const MapGeoFilterResetButton = ({
     show,
     onClick,
-}: ResetMapGeoFilterButtonProps) => (
+}: MapGeoFilterResetButtonProps) => (
     <AnimatePresence>
         {show && (
             <motion.div

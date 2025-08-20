@@ -1,3 +1,6 @@
+import { Point } from "geojson";
+import { EcoPinSeverity } from "./eco";
+
 export type MapLocation = {
     lat: number;
     lng: number;
@@ -38,4 +41,12 @@ export type MapLocationSearchResponse = {
     icon?: string;
     address: MapLocationSearchResponseAddress;
     extratags?: MapLocationSearchResponseExtratags;
+};
+
+export type MapEcoPin = {
+    id: string;
+    location: Point;
+    createdAt: string;
+    updatedAt: string;
+    severity: EcoPinSeverity;
 };

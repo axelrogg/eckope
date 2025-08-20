@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Search } from "lucide-react";
 
-import { MapSearchAutocomplete } from "@/components/map/tool-bar/search/autocomplete";
+import { MapSearchAutocomplete } from "@/components/map/tool-bar/search/map-search-autocomplete";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";

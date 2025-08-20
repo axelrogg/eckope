@@ -1,6 +1,28 @@
 import { MapClient } from "./map-client";
-import { MapSearchBar } from "@/components/map/tool-bar/search/search-bar";
 import { MapContext, MapProvider } from "./map-provider";
-import { MapToolBar } from "./tool-bar/map-tool-bar";
+import {
+    AnimatedCombobox,
+    MapGeoFilter,
+    MapGeoFilterContext,
+    MapGeoFilterProvider,
+    MapGeoFilterResetButton,
+    MapGeoFilterToggleButton,
+    MapSearchAutocomplete,
+    MapSearchBar,
+    MapToolBar,
+} from "./tool-bar";
 
-export { MapClient, MapContext, MapProvider, MapSearchBar, MapToolBar };
+export {
+    AnimatedCombobox,
+    MapClient,
+    MapContext,
+    MapGeoFilter,
+    MapGeoFilterContext,
+    MapGeoFilterProvider,
+    MapGeoFilterResetButton,
+    MapGeoFilterToggleButton,
+    MapProvider,
+    MapSearchAutocomplete,
+    MapSearchBar,
+    MapToolBar,
+};

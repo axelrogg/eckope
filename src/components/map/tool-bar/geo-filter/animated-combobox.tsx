@@ -1,3 +1,5 @@
+"use client";
+
 import { AnimatePresence, motion } from "motion/react";
 import { ComboBox, ComboboxOption } from "@/components/ui/combobox";
 

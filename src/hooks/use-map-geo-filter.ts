@@ -1,7 +1,7 @@
 "use client";
 
-import { MapGeoFilterContext } from "@/components/map/tool-bar/geo-filter/geo-filter-provider";
 import * as React from "react";
+import { MapGeoFilterContext } from "@/components/map/tool-bar/geo-filter/map-geo-filter-provider";
 
 /**
  * Access map-based geographic filter state and actions.

@@ -6,11 +6,7 @@ import { cn } from "@/lib/utils/cn";
 import { SlidersHorizontal } from "lucide-react";
 
 export const MapGeoFilterToggleButton = () => {
-    const {
-        hasActiveFilters,
-        anyDropdownVisible,
-        toggleFilters, // renamed from onClickFilterButton
-    } = useMapGeoFilter();
+    const { hasActiveFilters, anyDropdownVisible, toggleFilters } = useMapGeoFilter();
 
     return (
         <Button
